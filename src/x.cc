@@ -96,8 +96,11 @@ void XLib::Run(std::function<void(XEvent& e)> event_callback) {
 
 void XLib::DrawCells() {
 	XDrawRectangles(display, window, gc, cell_borders.data(), int(cell_borders.size()));
-	for (const auto& cell : cells) DrawTextElem(cell.label, &xft_grey);
-	for (const auto& cell : cells) DrawTextElem(cell.keycode, &xft_grey, Font("Charis SIL", font_sz / 2));
+	for (const auto& cell : cells) {
+		DrawTextElem(cell.label, &xft_grey);
+		DrawTextElem(cell.keycode, &xft_grey, Font("Charis SIL", font_sz / 2));
+		DrawTextElems(cell.keysyms, &xft_fgcolour, Font("Charis SIL", ushort(font_sz / 1.33)));
+	}
 	DrawTextElems(menu_text, &xft_fgcolour);
 }
 
@@ -117,7 +120,7 @@ void XLib::GenerateKeyboard() {
 	for (ushort x = step + 4 * sstep, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_4; x += step + sstep, i++)
 		*cells[cell_index++].border = {.x = short(x), .y = short(4 * sstep + 3 * step + top_offset), .width = step, .height = step};
 
-	// Set up the cell labels and keycodes
+	// Set up the cell labels, keycodes, and keysyms
 	cell_index = 0;
 	for (size_t i = 0; i < KEY_COUNT; i++) {
 		auto&		   cell = cells[cell_index++];
@@ -131,6 +134,22 @@ void XLib::GenerateKeyboard() {
 
 		cell.keycode.x = xpos;
 		cell.keycode.y = cell.border->y + font_sz / 2 + 4;
+
+		const auto vstride = ushort(.23 * rect->width);
+		const auto hstride = ushort(.25 * rect->height);
+
+		const auto v_start = rect->x + ushort(.1 * rect->width);
+
+		cell.keysyms[0].x = cell.keysyms[1].x = v_start;
+		cell.keysyms[2].x = cell.keysyms[3].x = v_start + vstride;
+		cell.keysyms[4].x = cell.keysyms[5].x = v_start + vstride * 2;
+		cell.keysyms[6].x = cell.keysyms[7].x = v_start + vstride * 3;
+
+		cell.keysyms[0].y	  = cell.keysyms[2].y =
+			cell.keysyms[4].y = cell.keysyms[6].y = rect->y + rect->height - hstride;
+
+		cell.keysyms[1].y	  = cell.keysyms[3].y =
+			cell.keysyms[5].y = cell.keysyms[7].y = rect->y + hstride;
 	}
 }
 
@@ -159,11 +178,12 @@ void XLib::DrawTextAt(int x, int y, std::u32string text) {
 	menu_text.push_back({x, y, std::move(text)});
 }
 
-void XLib::DrawTextElems(const std::vector<Text>& text_elems, XftColor* colour, XftFont* fnt) const {
+void XLib::DrawTextElems(const auto& text_elems, XftColor* colour, XftFont* fnt) const {
 	for (auto& text_elem : text_elems) DrawTextElem(text_elem, colour, fnt);
 }
 
 void XLib::DrawTextElem(const Text& elem, XftColor* colour, XftFont* fnt) const {
+	if (elem.content.empty()) return;
 	if (fnt == nullptr) fnt = font;
 	XftDrawString32(draw, colour, fnt, elem.x, elem.y,
 		(const FcChar32*) elem.content.data(), int(elem.content.size()));
@@ -202,6 +222,7 @@ void XLib::InitCells() {
 		cells[i].border			 = borders + i;
 		cells[i].keycode_raw	 = keycodes[i];
 		cells[i].keycode.content = ToUTF32(std::to_string(keycodes[i]));
+		for (size_t j = 0; j < 8; j++) GetKeysyms(cells[i]);
 	}
 }
 
@@ -214,4 +235,29 @@ XftFont* XLib::Font(const std::string& name, ushort font_sz) {
 														nullptr),
 				   "XftFontOpen(): Could not open " + name + " " + std::to_string(font_sz));
 	}
+}
+void XLib::GetKeysyms(Cell& cell) {
+	cell.keysyms[0].content = ResolveKeysym(cell.keycode_raw, 0);
+	cell.keysyms[1].content = ResolveKeysym(cell.keycode_raw, ShiftMask);
+	cell.keysyms[2].content = ResolveKeysym(cell.keycode_raw, Mod5Mask);
+	cell.keysyms[3].content = ResolveKeysym(cell.keycode_raw, ShiftMask | Mod5Mask);
+	cell.keysyms[4].content = ResolveKeysym(cell.keycode_raw, Mod3Mask);
+	cell.keysyms[5].content = ResolveKeysym(cell.keycode_raw, ShiftMask | Mod3Mask);
+	cell.keysyms[6].content = ResolveKeysym(cell.keycode_raw, Mod5Mask | Mod3Mask);
+	cell.keysyms[7].content = ResolveKeysym(cell.keycode_raw, Mod5Mask | Mod3Mask | ShiftMask);
+}
+
+std::u32string XLib::ResolveKeysym(KeyCode code, uint state) {
+	static char buf[64];
+	::memset(buf, 0, sizeof(buf));
+	KeySym sym;
+
+	XKeyPressedEvent ev;
+	ev.type	   = KeyPress;
+	ev.display = display;
+	ev.keycode = code;
+	ev.state   = state;
+
+	XLookupString(&ev, buf, 64, &sym, nullptr);
+	return sym == NoSymbol ? U"" : ToUTF32(buf);
 }

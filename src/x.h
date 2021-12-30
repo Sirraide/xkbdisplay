@@ -70,19 +70,21 @@ struct XLib {
 	ulong white{};
 	ulong black{};
 
-	void	   DrawCells();
-	void	   DrawCentredTextAt(const std::u32string& text, int xpos, int ypos);
-	void	   DrawTextAt(int x, int y, std::u32string text);
-	void	   DrawTextElems(const std::vector<Text>& text_elems, XftColor* colour, XftFont* fnt = nullptr) const;
-	void	   DrawTextElem(const Text& elem, XftColor* colour, XftFont* fnt = nullptr) const;
-	XftFont*   Font(const std::string& name, ushort font_sz);
-	void	   GenerateKeyboard();
-	void	   GenerateMenuText();
-	static int HandleError(Display* display, XErrorEvent* e);
-	void	   InitCells();
-	void	   Redraw();
-	void	   Run(std::function<void(XEvent& e)> event_callback);
-	XGlyphInfo TextExtents(const std::u32string& t, XftFont* fnt = nullptr) const;
+	void		   DrawCells();
+	void		   DrawCentredTextAt(const std::u32string& text, int xpos, int ypos);
+	void		   DrawTextAt(int x, int y, std::u32string text);
+	void		   DrawTextElems(const auto& text_elems, XftColor* colour, XftFont* fnt = nullptr) const;
+	void		   DrawTextElem(const Text& elem, XftColor* colour, XftFont* fnt = nullptr) const;
+	XftFont*	   Font(const std::string& name, ushort font_sz);
+	void		   GenerateKeyboard();
+	void		   GenerateMenuText();
+	static int	   HandleError(Display* display, XErrorEvent* e);
+	void		   InitCells();
+	void		   Redraw();
+	void		   Run(std::function<void(XEvent& e)> event_callback);
+	XGlyphInfo	   TextExtents(const std::u32string& t, XftFont* fnt = nullptr) const;
+	std::u32string ResolveKeysym(KeyCode code, uint state);
+	void GetKeysyms(Cell& cell);
 
 	inline constexpr ushort		   w(double f) const { return ushort(w_width * f); }
 	inline constexpr ushort		   h(double f) const { return ushort(w_height * f); }
