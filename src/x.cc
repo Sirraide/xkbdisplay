@@ -5,8 +5,7 @@
 #define FPS 120
 
 XLib::XLib() {
-	display	  = Verify(XOpenDisplay(nullptr), "XOpenDisplay()");
-	connexion = Verify(XGetXCBConnection(display), "XGetXCBConnection()");
+	display = Verify(XOpenDisplay(nullptr), "XOpenDisplay()");
 	// Set up error handler
 	XSetErrorHandler(HandleError);
 
@@ -87,9 +86,6 @@ void XLib::Run(std::function<void(XEvent& e)> event_callback) {
 			event_callback(e);
 		}
 
-		// DrawCells something
-		// DrawCells();
-		/*XDrawString(display, window, gc, static_cast<int>(xpos), 10, hello.data(), int(hello.size()));*/
 		usleep(1000000 / FPS);
 	}
 }

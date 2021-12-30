@@ -1,5 +1,5 @@
-#include <iostream>
 #include "x.h"
+
 #include <clocale>
 
 int main(void) {

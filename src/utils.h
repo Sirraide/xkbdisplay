@@ -1,9 +1,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <codecvt>
 #include <cstdlib>
 #include <iostream>
-#include <codecvt>
 #include <locale>
 
 #define DIE_PRE_ERR_STR "\033[1;31mError:\033[1;37m " //__FILE__, ":", __LINE__, ": \033[1;31mError:\033[1;37m "
@@ -42,7 +42,7 @@ auto Verify(auto* ptr, const std::string& msg = "Pointer was NULL") -> decltype(
 	return ptr;
 }
 
-std::string ToUTF8(const std::u32string& what);
+std::string	   ToUTF8(const std::u32string& what);
 std::u32string ToUTF32(const std::string& what);
 
 #endif /* UTILS_H */

@@ -5,14 +5,11 @@
 
 #include <X11/X.h>
 #include <X11/Xft/Xft.h>
-#include <X11/Xlib-xcb.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <functional>
 #include <map>
 #include <vector>
-#include <xcb/xcb.h>
-#include <xkbcommon/xkbcommon-x11.h>
 
 #define KEYS_IN_ROW_1 13
 #define KEYS_IN_ROW_2 12
@@ -50,7 +47,6 @@ struct XLib {
 	static constexpr uint base_line_width = 3;
 
 	Display*		  display{};
-	xcb_connection_t* connexion{};
 	Window			  window{};
 	Atom			  delete_window{};
 	GC				  gc{};
@@ -84,7 +80,7 @@ struct XLib {
 	void		   Run(std::function<void(XEvent& e)> event_callback);
 	XGlyphInfo	   TextExtents(const std::u32string& t, XftFont* fnt = nullptr) const;
 	std::u32string ResolveKeysym(KeyCode code, uint state);
-	void GetKeysyms(Cell& cell);
+	void		   GetKeysyms(Cell& cell);
 
 	inline constexpr ushort		   w(double f) const { return ushort(w_width * f); }
 	inline constexpr ushort		   h(double f) const { return ushort(w_height * f); }
