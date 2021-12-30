@@ -96,7 +96,8 @@ void XLib::Run(std::function<void(XEvent& e)> event_callback) {
 
 void XLib::DrawCells() {
 	XDrawRectangles(display, window, gc, cell_borders.data(), int(cell_borders.size()));
-	for(const auto& cell : cells) DrawTextElem(cell.label, &xft_grey);
+	for (const auto& cell : cells) DrawTextElem(cell.label, &xft_grey);
+	for (const auto& cell : cells) DrawTextElem(cell.keycode, &xft_grey, Font("Charis SIL", font_sz / 2));
 	DrawTextElems(menu_text, &xft_fgcolour);
 }
 
@@ -105,6 +106,7 @@ void XLib::GenerateKeyboard() {
 	const ushort sstep		= w(.0125);
 	const ushort top_offset = w(.05);
 
+	// Figure out where to place the cells and set up the borders around them
 	size_t cell_index = 0;
 	for (ushort x = sstep, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_1; x += step + sstep, i++)
 		*cells[cell_index++].border = {.x = short(x), .y = short(sstep + top_offset), .width = step, .height = step};
@@ -115,6 +117,7 @@ void XLib::GenerateKeyboard() {
 	for (ushort x = step + 4 * sstep, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_4; x += step + sstep, i++)
 		*cells[cell_index++].border = {.x = short(x), .y = short(4 * sstep + 3 * step + top_offset), .width = step, .height = step};
 
+	// Set up the cell labels and keycodes
 	cell_index = 0;
 	for (size_t i = 0; i < KEY_COUNT; i++) {
 		auto&		   cell = cells[cell_index++];
@@ -125,6 +128,9 @@ void XLib::GenerateKeyboard() {
 		auto		   ypos	   = rect->y + rect->height / 2 + extents.height / 2;
 		if (cell.label_char == U'Q') ypos -= font->descent / 2;
 		cell.label = {.x = xpos, .y = ypos, .content = text};
+
+		cell.keycode.x = xpos;
+		cell.keycode.y = cell.border->y + font_sz / 2 + 4;
 	}
 }
 
@@ -135,14 +141,7 @@ void XLib::Redraw() {
 	XSetLineAttributes(display, gc, uint(base_line_width * double(w_width) / double(base_width)), LineSolid, CapRound, JoinRound);
 
 	font_sz = w(.015);
-	if (main_font_cache.contains(font_sz)) font = main_font_cache[font_sz];
-	else {
-		font = main_font_cache[font_sz] = Verify(XftFontOpen(display, screen,
-													 XFT_FAMILY, XftTypeString, "Charis SIL",
-													 XFT_SIZE, XftTypeDouble, font_sz,
-													 nullptr),
-			"XftFontOpen(): Could not open Charis SIL " + std::to_string(font_sz));
-	}
+	font	= Font("Charis SIL", font_sz);
 
 	GenerateKeyboard();
 	GenerateMenuText();
@@ -160,18 +159,20 @@ void XLib::DrawTextAt(int x, int y, std::u32string text) {
 	menu_text.push_back({x, y, std::move(text)});
 }
 
-void XLib::DrawTextElems(const std::vector<Text>& text_elems, XftColor* colour) const {
-	for (auto& text_elem : text_elems) DrawTextElem(text_elem, colour);
+void XLib::DrawTextElems(const std::vector<Text>& text_elems, XftColor* colour, XftFont* fnt) const {
+	for (auto& text_elem : text_elems) DrawTextElem(text_elem, colour, fnt);
 }
 
-void XLib::DrawTextElem(const Text& elem, XftColor* colour) const {
-	XftDrawString32(draw, colour, font, elem.x, elem.y,
+void XLib::DrawTextElem(const Text& elem, XftColor* colour, XftFont* fnt) const {
+	if (fnt == nullptr) fnt = font;
+	XftDrawString32(draw, colour, fnt, elem.x, elem.y,
 		(const FcChar32*) elem.content.data(), int(elem.content.size()));
 }
 
-XGlyphInfo XLib::TextExtents(const std::u32string& t) const {
+XGlyphInfo XLib::TextExtents(const std::u32string& t, XftFont* fnt) const {
+	if (fnt == nullptr) fnt = font;
 	XGlyphInfo extents;
-	XftTextExtents32(display, font, (const FcChar32*) t.data(), int(t.size()), &extents);
+	XftTextExtents32(display, fnt, (const FcChar32*) t.data(), int(t.size()), &extents);
 	return extents;
 }
 
@@ -189,10 +190,27 @@ void XLib::DrawCentredTextAt(const std::u32string& text, int xpos, int ypos) {
 }
 
 void XLib::InitCells() {
-	static const char32_t label_chars[KEY_COUNT + 1] = U"¬1234567890-=QWERTYUIOP[]ASDFGHJKL;'^´ZXCVBNM,./"; // +1 because \0
+	static constexpr char32_t label_chars[KEY_COUNT + 1] = U"¬1234567890-=QWERTYUIOP[]ASDFGHJKL;'^´ZXCVBNM,./"; // +1 because \0
+	static constexpr uint	  keycodes[KEY_COUNT]		 = {
+		   49, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+		   24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+		   38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 51,
+		   94, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61};
 	auto* borders = cell_borders.data();
 	for (size_t i = 0; i < KEY_COUNT; i++) {
-		cells[i].label_char = label_chars[i];
-		cells[i].border = borders + i;
+		cells[i].label_char		 = label_chars[i];
+		cells[i].border			 = borders + i;
+		cells[i].keycode.content = ToUTF32(std::to_string(keycodes[i]));
+	}
+}
+
+XftFont* XLib::Font(const std::string& name, ushort font_sz) {
+	if (font_cache.contains({name, font_sz})) return font_cache[{name, font_sz}];
+	else {
+		return font_cache[{name, font_sz}] = Verify(XftFontOpen(display, screen,
+														XFT_FAMILY, XftTypeString, name.data(),
+														XFT_SIZE, XftTypeDouble, double(font_sz),
+														nullptr),
+				   "XftFontOpen(): Could not open " + name + " " + std::to_string(font_sz));
 	}
 }

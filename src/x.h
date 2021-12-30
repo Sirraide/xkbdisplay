@@ -33,11 +33,9 @@ enum Alignment : int {
 
 struct Cell {
 	char32_t			label_char{};
-	uint				keycode{};
-	uint				xpos{};
-	uint				ypos{};
+	Text				keycode{};
 	XRectangle*			border{};
-	Text label{};
+	Text				label{};
 	std::array<Text, 8> keysyms{};
 };
 
@@ -66,7 +64,7 @@ struct XLib {
 
 	uint   w_width	= 1400;
 	uint   w_height = 550;
-	double font_sz;
+	ushort font_sz;
 
 	ulong white{};
 	ulong black{};
@@ -74,15 +72,16 @@ struct XLib {
 	void	   DrawCells();
 	void	   DrawCentredTextAt(const std::u32string& text, int xpos, int ypos);
 	void	   DrawTextAt(int x, int y, std::u32string text);
-	void	   DrawTextElems(const std::vector<Text>& text_elems, XftColor* colour) const;
-	void	   DrawTextElem(const Text& elem, XftColor* colour) const;
+	void	   DrawTextElems(const std::vector<Text>& text_elems, XftColor* colour, XftFont* fnt = nullptr) const;
+	void	   DrawTextElem(const Text& elem, XftColor* colour, XftFont* fnt = nullptr) const;
+	XftFont*   Font(const std::string& name, ushort font_sz);
 	void	   GenerateKeyboard();
 	void	   GenerateMenuText();
 	static int HandleError(Display* display, XErrorEvent* e);
 	void	   InitCells();
 	void	   Redraw();
 	void	   Run(std::function<void(XEvent& e)> event_callback);
-	XGlyphInfo TextExtents(const std::u32string& t) const;
+	XGlyphInfo TextExtents(const std::u32string& t, XftFont* fnt = nullptr) const;
 
 	inline constexpr ushort		   w(double f) const { return ushort(w_width * f); }
 	inline constexpr ushort		   h(double f) const { return ushort(w_height * f); }
@@ -98,11 +97,10 @@ struct XLib {
 		};
 	}
 
-	std::array<Cell, KEY_COUNT> cells{};
-	std::array<XRectangle, KEY_COUNT> cell_borders{};
-	std::vector<Text>																menu_text{};
-	std::map<double, XftFont*>														main_font_cache{};
-
+	std::array<Cell, KEY_COUNT>						   cells{};
+	std::array<XRectangle, KEY_COUNT>				   cell_borders{};
+	std::vector<Text>								   menu_text{};
+	std::map<std::pair<std::string, ushort>, XftFont*> font_cache{};
 	XLib();
 	~XLib();
 };
