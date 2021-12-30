@@ -1,5 +1,7 @@
 #include "x.h"
 
+#include "diacritics.h"
+
 #include <unistd.h>
 
 #define FPS 120
@@ -20,8 +22,10 @@ XLib::XLib() {
 	draw	   = Verify(XftDrawCreate(display, window, attrs.visual, attrs.colormap), "XftDrawCreate()");
 	x_fgcolour = XColour(fgcolour);
 	x_grey	   = XColour(grey);
+	x_red	   = XColour(0xFF6188);
 	XftColorAllocValue(display, attrs.visual, attrs.colormap, &x_fgcolour, &xft_fgcolour);
 	XftColorAllocValue(display, attrs.visual, attrs.colormap, &x_grey, &xft_grey);
+	XftColorAllocValue(display, attrs.visual, attrs.colormap, &x_red, &xft_red);
 
 	InitCells();
 }
@@ -178,9 +182,10 @@ void XLib::DrawTextElems(const auto& text_elems, XftColor* colour, XftFont* fnt)
 	for (auto& text_elem : text_elems) DrawTextElem(text_elem, colour, fnt);
 }
 
-void XLib::DrawTextElem(const Text& elem, XftColor* colour, XftFont* fnt) const {
+void XLib::DrawTextElem(const Text& elem, const XftColor* colour, XftFont* fnt) const {
 	if (elem.content.empty()) return;
 	if (fnt == nullptr) fnt = font;
+	if (elem.diacritic) colour = &xft_red;
 	XftDrawString32(draw, colour, fnt, elem.x, elem.y,
 		(const FcChar32*) elem.content.data(), int(elem.content.size()));
 }
@@ -233,17 +238,17 @@ XftFont* XLib::Font(const std::string& name, ushort font_sz) {
 	}
 }
 void XLib::GetKeysyms(Cell& cell) {
-	cell.keysyms[0].content = ResolveKeysym(cell.keycode_raw, 0);
-	cell.keysyms[1].content = ResolveKeysym(cell.keycode_raw, ShiftMask);
-	cell.keysyms[2].content = ResolveKeysym(cell.keycode_raw, Mod5Mask);
-	cell.keysyms[3].content = ResolveKeysym(cell.keycode_raw, ShiftMask | Mod5Mask);
-	cell.keysyms[4].content = ResolveKeysym(cell.keycode_raw, Mod3Mask);
-	cell.keysyms[5].content = ResolveKeysym(cell.keycode_raw, ShiftMask | Mod3Mask);
-	cell.keysyms[6].content = ResolveKeysym(cell.keycode_raw, Mod5Mask | Mod3Mask);
-	cell.keysyms[7].content = ResolveKeysym(cell.keycode_raw, Mod5Mask | Mod3Mask | ShiftMask);
+	ResolveKeysym(cell.keysyms[0], cell.keycode_raw, 0);
+	ResolveKeysym(cell.keysyms[1], cell.keycode_raw, ShiftMask);
+	ResolveKeysym(cell.keysyms[2], cell.keycode_raw, Mod5Mask);
+	ResolveKeysym(cell.keysyms[3], cell.keycode_raw, ShiftMask | Mod5Mask);
+	ResolveKeysym(cell.keysyms[4], cell.keycode_raw, Mod3Mask);
+	ResolveKeysym(cell.keysyms[5], cell.keycode_raw, ShiftMask | Mod3Mask);
+	ResolveKeysym(cell.keysyms[6], cell.keycode_raw, Mod5Mask | Mod3Mask);
+	ResolveKeysym(cell.keysyms[7], cell.keycode_raw, Mod5Mask | Mod3Mask | ShiftMask);
 }
 
-std::u32string XLib::ResolveKeysym(KeyCode code, uint state) {
+void XLib::ResolveKeysym(Text& text, KeyCode code, uint state) {
 	static char buf[64];
 	::memset(buf, 0, sizeof(buf));
 	KeySym sym;
@@ -255,5 +260,12 @@ std::u32string XLib::ResolveKeysym(KeyCode code, uint state) {
 	ev.state   = state;
 
 	XLookupString(&ev, buf, 64, &sym, nullptr);
-	return sym == NoSymbol ? U"" : ToUTF32(buf);
+	if (sym == NoSymbol) text.content = U"";
+	else {
+		text.content   = ToUTF32(buf);
+		text.diacritic = std::string(XKeysymToString(sym)).starts_with("dead") || IsDiacritic(text.content[0]);
+		if (text.diacritic) {
+			text.content = U"◌" + text.content;
+		}
+	}
 }

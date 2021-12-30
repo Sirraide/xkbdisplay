@@ -22,6 +22,7 @@ struct Text {
 	int			   x{};
 	int			   y{};
 	std::u32string content;
+	bool		   diacritic = false;
 };
 
 enum Alignment : int {
@@ -44,7 +45,7 @@ struct XLib {
 
 	static constexpr uint base_width	  = 1400;
 	static constexpr uint base_height	  = 550;
-	static constexpr uint base_line_width = 3;
+	static constexpr uint base_line_width = 2;
 
 	Display*		  display{};
 	Window			  window{};
@@ -55,9 +56,11 @@ struct XLib {
 	XftFont*		  font{};
 	XftDraw*		  draw{};
 	XRenderColor	  x_fgcolour{};
-	XftColor		  xft_fgcolour{};
 	XRenderColor	  x_grey{};
+	XRenderColor	  x_red{};
+	XftColor		  xft_fgcolour{};
 	XftColor		  xft_grey{};
+	XftColor		  xft_red{};
 
 	uint   w_width	= 1400;
 	uint   w_height = 550;
@@ -66,21 +69,21 @@ struct XLib {
 	ulong white{};
 	ulong black{};
 
-	void		   DrawCells();
-	void		   DrawCentredTextAt(const std::u32string& text, int xpos, int ypos);
-	void		   DrawTextAt(int x, int y, std::u32string text);
-	void		   DrawTextElems(const auto& text_elems, XftColor* colour, XftFont* fnt = nullptr) const;
-	void		   DrawTextElem(const Text& elem, XftColor* colour, XftFont* fnt = nullptr) const;
-	XftFont*	   Font(const std::string& name, ushort font_sz);
-	void		   GenerateKeyboard();
-	void		   GenerateMenuText();
-	static int	   HandleError(Display* display, XErrorEvent* e);
-	void		   InitCells();
-	void		   Redraw();
-	void		   Run(std::function<void(XEvent& e)> event_callback);
-	XGlyphInfo	   TextExtents(const std::u32string& t, XftFont* fnt = nullptr) const;
-	std::u32string ResolveKeysym(KeyCode code, uint state);
-	void		   GetKeysyms(Cell& cell);
+	void	   DrawCells();
+	void	   DrawCentredTextAt(const std::u32string& text, int xpos, int ypos);
+	void	   DrawTextAt(int x, int y, std::u32string text);
+	void	   DrawTextElems(const auto& text_elems, XftColor* colour, XftFont* fnt = nullptr) const;
+	void	   DrawTextElem(const Text& elem, const XftColor* colour, XftFont* fnt = nullptr) const;
+	XftFont*   Font(const std::string& name, ushort font_sz);
+	void	   GenerateKeyboard();
+	void	   GenerateMenuText();
+	static int HandleError(Display* display, XErrorEvent* e);
+	void	   InitCells();
+	void	   Redraw();
+	void	   Run(std::function<void(XEvent& e)> event_callback);
+	XGlyphInfo TextExtents(const std::u32string& t, XftFont* fnt = nullptr) const;
+	void	   ResolveKeysym(Text& text, KeyCode code, uint state);
+	void	   GetKeysyms(Cell& cell);
 
 	inline constexpr ushort		   w(double f) const { return ushort(w_width * f); }
 	inline constexpr ushort		   h(double f) const { return ushort(w_height * f); }
