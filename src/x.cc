@@ -191,15 +191,16 @@ void XLib::DrawCentredTextAt(const std::u32string& text, int xpos, int ypos) {
 
 void XLib::InitCells() {
 	static constexpr char32_t label_chars[KEY_COUNT + 1] = U"¬1234567890-=QWERTYUIOP[]ASDFGHJKL;'^´ZXCVBNM,./"; // +1 because \0
-	static constexpr uint	  keycodes[KEY_COUNT]		 = {
-		   49, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-		   24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-		   38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 51,
-		   94, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61};
+	static constexpr KeyCode  keycodes[KEY_COUNT]		 = {
+		49, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+		24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+		38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 51,
+		94, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61};
 	auto* borders = cell_borders.data();
 	for (size_t i = 0; i < KEY_COUNT; i++) {
 		cells[i].label_char		 = label_chars[i];
 		cells[i].border			 = borders + i;
+		cells[i].keycode_raw	 = keycodes[i];
 		cells[i].keycode.content = ToUTF32(std::to_string(keycodes[i]));
 	}
 }

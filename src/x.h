@@ -33,6 +33,7 @@ enum Alignment : int {
 
 struct Cell {
 	char32_t			label_char{};
+	KeyCode				keycode_raw;
 	Text				keycode{};
 	XRectangle*			border{};
 	Text				label{};
