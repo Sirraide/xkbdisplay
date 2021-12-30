@@ -263,7 +263,7 @@ void XLib::ResolveKeysym(Text& text, KeyCode code, uint state) {
 	if (sym == NoSymbol) text.content = U"";
 	else {
 		text.content   = ToUTF32(buf);
-		text.diacritic = std::string(XKeysymToString(sym)).starts_with("dead") || IsDiacritic(text.content[0]);
+		text.diacritic = std::string(XKeysymToString(sym)).starts_with("dead") || IsDiacritic(static_cast<int>(text.content[0]));
 		if (text.diacritic) {
 			text.content = U"◌" + text.content;
 		}
