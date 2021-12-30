@@ -1,17 +1,11 @@
 #include <iostream>
 #include "x.h"
+#include "layout.h"
 
 int main(void) {
 	XLib X{};
 
-	/*int ret;
-	char** fonts = XListFonts(X.display, "*", INT32_MAX, &ret);
-
-	for(int i = 0; i < ret; i++) {
-		std::cout << fonts[i] << std::endl;
-	}
-
-	exit(0);*/
+	Layout layout(&X);
 
 	X.Run([&](XEvent& e) {
 		switch (e.type) {

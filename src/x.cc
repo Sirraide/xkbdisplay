@@ -2,15 +2,11 @@
 
 #include <unistd.h>
 
-#define FPS			  120
-#define KEYS_IN_ROW_1 13
-#define KEYS_IN_ROW_2 12
-#define KEYS_IN_ROW_3 12
-#define KEYS_IN_ROW_4 11
+#define FPS 120
 
 XLib::XLib() {
-	display = Verify(XOpenDisplay(nullptr), "XOpenDisplay()");
-
+	display	  = Verify(XOpenDisplay(nullptr), "XOpenDisplay()");
+	connexion = Verify(XGetXCBConnection(display), "XGetXCBConnection()");
 	// Set up error handler
 	XSetErrorHandler(HandleError);
 
@@ -18,22 +14,17 @@ XLib::XLib() {
 	window = XCreateSimpleWindow(display, XRootWindow(display, screen), 0, 0, w_width, w_height, 0, 0, 0x2D2A2E);
 	white  = XWhitePixel(display, screen);
 	black  = XBlackPixel(display, screen);
-	// XSelectInput(display, window, KeyPressMask);
 
 	XGetWindowAttributes(display, window, &attrs);
 
-	// Initialise the font
-	/*font = Verify(XftFontOpen(display, screen,
-					  XFT_FAMILY, XftTypeString, "Charis SIL",
-					  XFT_SIZE, XftTypeDouble, double(w(.01)),
-					  nullptr),
-		"XftFontOpen()");
-*/
-	draw	 = Verify(XftDrawCreate(display, window, attrs.visual, attrs.colormap), "XftDrawCreate()");
+	// Set up colours
+	draw	   = Verify(XftDrawCreate(display, window, attrs.visual, attrs.colormap), "XftDrawCreate()");
 	x_fgcolour = XColour(fgcolour);
-	x_grey = XColour(grey);
+	x_grey	   = XColour(grey);
 	XftColorAllocValue(display, attrs.visual, attrs.colormap, &x_fgcolour, &xft_fgcolour);
 	XftColorAllocValue(display, attrs.visual, attrs.colormap, &x_grey, &xft_grey);
+
+	InitCells();
 }
 
 XLib::~XLib() {
@@ -96,40 +87,44 @@ void XLib::Run(std::function<void(XEvent& e)> event_callback) {
 			event_callback(e);
 		}
 
-		// Draw something
-		// Draw();
+		// DrawCells something
+		// DrawCells();
 		/*XDrawString(display, window, gc, static_cast<int>(xpos), 10, hello.data(), int(hello.size()));*/
 		usleep(1000000 / FPS);
 	}
 }
 
-void XLib::Draw() {
-	XDrawRectangles(display, window, gc, rects.data(), int(rects.size()));
+void XLib::DrawCells() {
+	XDrawRectangles(display, window, gc, cell_borders.data(), int(cell_borders.size()));
+	for(const auto& cell : cells) DrawTextElem(cell.label, &xft_grey);
 	DrawTextElems(menu_text, &xft_fgcolour);
 }
 
 void XLib::GenerateKeyboard() {
-	static const char32_t label_chars[] = U"¬1234567890-=QWERTYUIOP[]ASDFGHJKL;'^´ZXCVBNM,./";
 	const ushort step		= w(.0625);
 	const ushort sstep		= w(.0125);
 	const ushort top_offset = w(.05);
-	for (ushort x = sstep, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_1; x += step + sstep, i++)
-		rects.push_back({.x = short(x), .y = short(sstep + top_offset), .width = step, .height = step});
-	for (ushort x = step, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_2; x += step + sstep, i++)
-		rects.push_back({.x = short(x), .y = short(2 * sstep + step + top_offset), .width = step, .height = step});
-	for (ushort x = step + 2 * sstep, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_3; x += step + sstep, i++)
-		rects.push_back({.x = short(x), .y = short(3 * sstep + 2 * step + top_offset), .width = step, .height = step});
-	for (ushort x = step + 4 * sstep, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_4; x += step + sstep, i++)
-		rects.push_back({.x = short(x), .y = short(4 * sstep + 3 * step + top_offset), .width = step, .height = step});
 
-	for (size_t i = 0; i < rects.size(); i++) {
-		auto& rect = rects[i];
-		std::u32string text{label_chars[i]};
-		auto extents = TextExtents(text);
-		auto xpos = rect.x + rect.width / 2 - extents.width / 2;
-		auto ypos = rect.y + rect.height / 2 + extents.height / 2;
-		if(text == U"Q") ypos -= font->descent / 2;
-		labels.push_back(Text{.x = xpos, .y = ypos, .content = text});
+	size_t cell_index = 0;
+	for (ushort x = sstep, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_1; x += step + sstep, i++)
+		*cells[cell_index++].border = {.x = short(x), .y = short(sstep + top_offset), .width = step, .height = step};
+	for (ushort x = step, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_2; x += step + sstep, i++)
+		*cells[cell_index++].border = {.x = short(x), .y = short(2 * sstep + step + top_offset), .width = step, .height = step};
+	for (ushort x = step + 2 * sstep, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_3; x += step + sstep, i++)
+		*cells[cell_index++].border = {.x = short(x), .y = short(3 * sstep + 2 * step + top_offset), .width = step, .height = step};
+	for (ushort x = step + 4 * sstep, i = 0; x < ushort(w_width - step) && i < KEYS_IN_ROW_4; x += step + sstep, i++)
+		*cells[cell_index++].border = {.x = short(x), .y = short(4 * sstep + 3 * step + top_offset), .width = step, .height = step};
+
+	cell_index = 0;
+	for (size_t i = 0; i < KEY_COUNT; i++) {
+		auto&		   cell = cells[cell_index++];
+		auto*		   rect = cell.border;
+		std::u32string text{cell.label_char};
+		auto		   extents = TextExtents(text);
+		auto		   xpos	   = rect->x + rect->width / 2 - extents.width / 2;
+		auto		   ypos	   = rect->y + rect->height / 2 + extents.height / 2;
+		if (cell.label_char == U'Q') ypos -= font->descent / 2;
+		cell.label = {.x = xpos, .y = ypos, .content = text};
 	}
 }
 
@@ -138,8 +133,6 @@ void XLib::Redraw() {
 	w_width	 = static_cast<uint>(attrs.width);
 	w_height = static_cast<uint>(attrs.height);
 	XSetLineAttributes(display, gc, uint(base_line_width * double(w_width) / double(base_width)), LineSolid, CapRound, JoinRound);
-	rects.clear();
-	labels.clear();
 
 	font_sz = w(.015);
 	if (main_font_cache.contains(font_sz)) font = main_font_cache[font_sz];
@@ -154,8 +147,7 @@ void XLib::Redraw() {
 	GenerateKeyboard();
 	GenerateMenuText();
 	XClearWindow(display, window);
-	Draw();
-	DrawTextElems(labels, &xft_grey);
+	DrawCells();
 }
 
 int XLib::HandleError(Display* display, XErrorEvent* e) {
@@ -169,10 +161,14 @@ void XLib::DrawTextAt(int x, int y, std::u32string text) {
 }
 
 void XLib::DrawTextElems(const std::vector<Text>& text_elems, XftColor* colour) const {
-	for (auto& text_elem : text_elems)
-		XftDrawString32(draw, colour, font, text_elem.x, text_elem.y,
-			(const FcChar32*) text_elem.content.data(), int(text_elem.content.size()));
+	for (auto& text_elem : text_elems) DrawTextElem(text_elem, colour);
 }
+
+void XLib::DrawTextElem(const Text& elem, XftColor* colour) const {
+	XftDrawString32(draw, colour, font, elem.x, elem.y,
+		(const FcChar32*) elem.content.data(), int(elem.content.size()));
+}
+
 XGlyphInfo XLib::TextExtents(const std::u32string& t) const {
 	XGlyphInfo extents;
 	XftTextExtents32(display, font, (const FcChar32*) t.data(), int(t.size()), &extents);
@@ -182,8 +178,21 @@ XGlyphInfo XLib::TextExtents(const std::u32string& t) const {
 void XLib::GenerateMenuText() {
 	menu_text.clear();
 	std::u32string font_name = U"Font: Charis SIL " + ToUTF32(std::to_string(int(font_sz)));
-	auto extents = TextExtents(font_name);
-	auto xpos = w_width / 2 - extents.width / 2;
-	auto ypos = extents.height * 2;
-	DrawTextAt(xpos, ypos, font_name);
+	DrawCentredTextAt(font_name, w_width / 2, HEIGHT_TIMES_TWO);
+}
+
+void XLib::DrawCentredTextAt(const std::u32string& text, int xpos, int ypos) {
+	auto extents = TextExtents(text);
+	auto x		 = xpos - extents.width / 2;
+	auto y		 = ypos == HEIGHT_TIMES_TWO ? extents.height * 2 : ypos;
+	DrawTextAt(int(x), int(y), text);
+}
+
+void XLib::InitCells() {
+	static const char32_t label_chars[KEY_COUNT + 1] = U"¬1234567890-=QWERTYUIOP[]ASDFGHJKL;'^´ZXCVBNM,./"; // +1 because \0
+	auto* borders = cell_borders.data();
+	for (size_t i = 0; i < KEY_COUNT; i++) {
+		cells[i].label_char = label_chars[i];
+		cells[i].border = borders + i;
+	}
 }

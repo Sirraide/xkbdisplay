@@ -7,7 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 file(GLOB SRC src/*.cc src/*.h)
 
 add_executable(xkbdisplay ${SRC})
-target_link_libraries(xkbdisplay PRIVATE X11 Xft)
+target_link_libraries(xkbdisplay PRIVATE X11 Xft xkbcommon xcb X11-xcb xkbcommon-x11)
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     target_compile_options(xkbdisplay PRIVATE
             -Wall -Wextra -Wundef -Werror=return-type -Wconversion -Wpedantic

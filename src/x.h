@@ -3,17 +3,42 @@
 
 #include "utils.h"
 
+#include <X11/X.h>
 #include <X11/Xft/Xft.h>
+#include <X11/Xlib-xcb.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <functional>
 #include <map>
 #include <vector>
+#include <xcb/xcb.h>
+#include <xkbcommon/xkbcommon-x11.h>
+
+#define KEYS_IN_ROW_1 13
+#define KEYS_IN_ROW_2 12
+#define KEYS_IN_ROW_3 12
+#define KEYS_IN_ROW_4 11
+
+#define KEY_COUNT (KEYS_IN_ROW_1 + KEYS_IN_ROW_2 + KEYS_IN_ROW_3 + KEYS_IN_ROW_4)
 
 struct Text {
 	int			   x{};
 	int			   y{};
 	std::u32string content;
+};
+
+enum Alignment : int {
+	HEIGHT_TIMES_TWO = -1
+};
+
+struct Cell {
+	char32_t			label_char{};
+	uint				keycode{};
+	uint				xpos{};
+	uint				ypos{};
+	XRectangle*			border{};
+	Text label{};
+	std::array<Text, 8> keysyms{};
 };
 
 struct XLib {
@@ -26,6 +51,7 @@ struct XLib {
 	static constexpr uint base_line_width = 3;
 
 	Display*		  display{};
+	xcb_connection_t* connexion{};
 	Window			  window{};
 	Atom			  delete_window{};
 	GC				  gc{};
@@ -45,12 +71,15 @@ struct XLib {
 	ulong white{};
 	ulong black{};
 
-	void	   Draw();
+	void	   DrawCells();
+	void	   DrawCentredTextAt(const std::u32string& text, int xpos, int ypos);
 	void	   DrawTextAt(int x, int y, std::u32string text);
 	void	   DrawTextElems(const std::vector<Text>& text_elems, XftColor* colour) const;
+	void	   DrawTextElem(const Text& elem, XftColor* colour) const;
 	void	   GenerateKeyboard();
-	void GenerateMenuText();
+	void	   GenerateMenuText();
 	static int HandleError(Display* display, XErrorEvent* e);
+	void	   InitCells();
 	void	   Redraw();
 	void	   Run(std::function<void(XEvent& e)> event_callback);
 	XGlyphInfo TextExtents(const std::u32string& t) const;
@@ -69,10 +98,10 @@ struct XLib {
 		};
 	}
 
-	std::vector<XRectangle>	   rects{};
-	std::vector<Text>		   labels{};
-	std::vector<Text>		   menu_text{};
-	std::map<double, XftFont*> main_font_cache{};
+	std::array<Cell, KEY_COUNT> cells{};
+	std::array<XRectangle, KEY_COUNT> cell_borders{};
+	std::vector<Text>																menu_text{};
+	std::map<double, XftFont*>														main_font_cache{};
 
 	XLib();
 	~XLib();
