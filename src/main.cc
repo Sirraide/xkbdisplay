@@ -13,8 +13,6 @@ int main(void) {
 
 	exit(0);*/
 
-	X.DrawTextAt(5, 5, U"Helloé, Worldλɢɹʈ");
-
 	X.Run([&](XEvent& e) {
 		switch (e.type) {
 			case ConfigureNotify: {
