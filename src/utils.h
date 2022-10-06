@@ -36,8 +36,8 @@ template <typename T, typename... Ts>
 	_Die(ts...);
 }
 
-template <>
-auto Verify(auto* ptr, const std::string& msg = "Pointer was NULL") -> decltype(ptr) {
+template <typename Pointer>
+auto Verify(Pointer ptr, const std::string& msg = "Pointer was NULL") -> decltype(ptr) {
 	if (!ptr) Die(msg);
 	return ptr;
 }
