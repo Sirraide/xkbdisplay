@@ -309,7 +309,7 @@ void DisplayContext::GenerateKeyboard() {
     auto ComputeBorders = [&, cell_index = usz(0), n = u16(0)](u16 num_keys) mutable { // clang-format off
         for (
             u16 x = u16(gap + n * 2 * gap), i = 0;
-            x + cell_size < right_margin and i < num_keys;
+            x < right_margin and i < num_keys;
             x += cell_size + gap, i++
         ) *cells[cell_index++].border = {
             .x = i16(x),
