@@ -1,9 +1,9 @@
 #include <chrono>
 #include <functional>
+#include <map>
 #include <print>
 #include <thread>
 #include <unistd.h>
-#include <unordered_map>
 #include <vector>
 #include <X11/X.h>
 #include <X11/Xft/Xft.h>
@@ -65,7 +65,7 @@ class DisplayContext {
     std::array<Cell, KEY_COUNT> cells{};
     std::array<XRectangle, KEY_COUNT> cell_borders{};
     std::vector<Text> menu_text{};
-    std::unordered_map<std::pair<std::string, u32>, XftFont*> font_cache{};
+    std::map<std::pair<std::string, u32>, XftFont*> font_cache{};
 
     u32 w_width = 1'400;
     u32 w_height = 550;
@@ -98,7 +98,6 @@ private:
     auto Font(const std::string& name, u32 font_sz) -> XftFont*;
     void GenerateKeyboard();
     void GenerateMenuText();
-    void GetKeysyms(Cell& cell);
     void InitCells();
     auto InitDisplay() -> Result<>;
     auto InitFonts() -> Result<>;
@@ -143,7 +142,7 @@ DisplayContext::~DisplayContext() {
 }
 
 auto DisplayContext::Create() -> Result<std::unique_ptr<DisplayContext>> {
-    auto C = std::make_unique<DisplayContext>();
+    std::unique_ptr<DisplayContext> C{new DisplayContext()};
     Try(C->InitDisplay());
     Try(C->InitFonts());
     C->InitCells();
@@ -165,7 +164,16 @@ void DisplayContext::InitCells() { // clang-format off
         cells[i].border = cell_borders.data() + i;
         cells[i].keycode_raw = keycodes[i];
         cells[i].keycode.content = ToUtf32(std::to_string(keycodes[i]));
-        for (size_t j = 0; j < 8; j++) GetKeysyms(cells[i]);
+        for (size_t j = 0; j < 8; j++) {
+            ResolveKeysym(cells[i].keysyms[0], keycodes[i], 0);
+            ResolveKeysym(cells[i].keysyms[1], keycodes[i], ShiftMask);
+            ResolveKeysym(cells[i].keysyms[2], keycodes[i], Mod5Mask);
+            ResolveKeysym(cells[i].keysyms[3], keycodes[i], ShiftMask | Mod5Mask);
+            ResolveKeysym(cells[i].keysyms[4], keycodes[i], Mod3Mask);
+            ResolveKeysym(cells[i].keysyms[5], keycodes[i], ShiftMask | Mod3Mask);
+            ResolveKeysym(cells[i].keysyms[6], keycodes[i], Mod5Mask | Mod3Mask);
+            ResolveKeysym(cells[i].keysyms[7], keycodes[i], Mod5Mask | Mod3Mask | ShiftMask);
+        }
     }
 }
 
@@ -298,9 +306,9 @@ void DisplayContext::GenerateKeyboard() {
     const u16 right_margin = u16(w_width - cell_size);
 
     // Figure out where to place the cells and set up the borders around them.
-    auto ComputeBorders = [&, cell_index = 0, n = 0](u16 num_keys) mutable { // clang-format off
+    auto ComputeBorders = [&, cell_index = usz(0), n = u16(0)](u16 num_keys) mutable { // clang-format off
         for (
-            u16 x = gap + n * 2 * gap, i = 0;
+            u16 x = u16(gap + n * 2 * gap), i = 0;
             x + cell_size < right_margin and i < num_keys;
             x += cell_size + gap, i++
         ) *cells[cell_index++].border = {
@@ -308,7 +316,8 @@ void DisplayContext::GenerateKeyboard() {
             .y = i16((n + 1) * gap + n * cell_size + top_offset),
             .width = cell_size,
             .height = cell_size,
-        }; n++;
+        };
+        n++;
     }; // clang-format on
 
     ComputeBorders(KEYS_IN_ROW_1);
@@ -331,12 +340,12 @@ void DisplayContext::GenerateKeyboard() {
         if (cell.label_char == U'Q') ypos -= font->descent / 2;
         cell.label = {.x = xpos, .y = ypos, .content = text};
         cell.keycode.x = xpos;
-        cell.keycode.y = cell.border->y + font_sz / 2 + 4;
+        cell.keycode.y = int(cell.border->y) + int(font_sz) / 2 + 4;
 
         // Er, this works, I’m not going to question how...
-        const auto vstride = usz(.23 * rect->width);
-        const auto hstride = usz(.25 * rect->height);
-        const auto v_start = rect->x + usz(.1 * rect->width);
+        const auto vstride = int(.23 * rect->width);
+        const auto hstride = int(.25 * rect->height);
+        const int v_start = rect->x + int(.1 * rect->width);
         cell.keysyms[0].x = cell.keysyms[1].x = v_start;
         cell.keysyms[2].x = cell.keysyms[3].x = v_start + vstride;
         cell.keysyms[4].x = cell.keysyms[5].x = v_start + vstride * 2;
@@ -352,17 +361,6 @@ void DisplayContext::GenerateMenuText() {
     menu_text.clear();
     std::u32string font_name = U"Font: Charis SIL " + ToUtf32(std::to_string(int(font_sz)));
     DrawCentredTextAt(font_name, w_width / 2, HEIGHT_TIMES_TWO);
-}
-
-void DisplayContext::GetKeysyms(Cell& cell) {
-    ResolveKeysym(cell.keysyms[0], cell.keycode_raw, 0);
-    ResolveKeysym(cell.keysyms[1], cell.keycode_raw, ShiftMask);
-    ResolveKeysym(cell.keysyms[2], cell.keycode_raw, Mod5Mask);
-    ResolveKeysym(cell.keysyms[3], cell.keycode_raw, ShiftMask | Mod5Mask);
-    ResolveKeysym(cell.keysyms[4], cell.keycode_raw, Mod3Mask);
-    ResolveKeysym(cell.keysyms[5], cell.keycode_raw, ShiftMask | Mod3Mask);
-    ResolveKeysym(cell.keysyms[6], cell.keycode_raw, Mod5Mask | Mod3Mask);
-    ResolveKeysym(cell.keysyms[7], cell.keycode_raw, Mod5Mask | Mod3Mask | ShiftMask);
 }
 
 void DisplayContext::ResolveKeysym(Text& text, KeyCode code, u32 state) const {
@@ -385,8 +383,7 @@ void DisplayContext::ResolveKeysym(Text& text, KeyCode code, u32 state) const {
         // it now...
         try {
             text.content = ToUtf32(std::string_view{buf.data(), usz(size)});
-            text.diacritic = std::string_view(XKeysymToString(sym)).starts_with("dead")
-                || IsDiacritic(static_cast<int>(text.content[0]));
+            text.diacritic = std::string_view(XKeysymToString(sym)).starts_with("dead") || IsDiacritic(text.content[0]);
             if (text.diacritic) text.content = U"◌" + text.content;
         } catch (...) {
             text.content = U"";
@@ -441,7 +438,7 @@ void DisplayContext::DrawTextElem(const Text& elem, const XftColor* colour, XftF
 }
 
 auto DisplayContext::Font(const std::string& name, u32 font_sz) -> XftFont* {
-    auto pair = {name, font_sz};
+    std::pair pair = {name, font_sz};
     if (font_cache.contains(pair)) return font_cache[pair];
     auto f = font_cache[std::move(pair)] = XftFontOpen(
         display,

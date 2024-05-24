@@ -139,6 +139,7 @@ FetchContent_MakeAvailable(stream)
 target_include_directories(options INTERFACE
     "${clopts_SOURCE_DIR}/include"
     "${PROJECT_SOURCE_DIR}/include"
+    /usr/include/freetype2/ # Required by Xft.
 )
 
 ## ============================================================================

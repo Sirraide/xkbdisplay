@@ -7,8 +7,8 @@
 #include <ranges>
 #include <stream/stream.hh>
 #include <xkb++/utils.hh>
-#include <xkbcommon/xkbcommon.h>
 #include <xkb++/xkbgen.hh>
+#include <xkbcommon/xkbcommon.h>
 
 #define LAYOUT_ISO_105 "iso-105"
 constexpr usz LAYER_COUNT = 8;
@@ -227,11 +227,13 @@ auto Layout::Parse(std::string_view text) -> Result<Layout> {
     return L;
 }
 
-auto Main(detail::options::optvals_type& opts) -> Result<> {
+auto xkbgen::Main(int argc, char** argv) -> Result<int> {
+    auto opts = detail::options::parse(argc, argv);
     auto file = opts.get<"file">();
     auto output = opts.get_or<"-o">("-");
     auto o = output == "-"sv ? stdout : fopen(output.data(), "w");
     if (not o) return Error("Failed to open output file '{}'", output);
     auto layout = Try(Layout::Parse(file->contents));
-    return layout.emit(o);
+    Try(layout.emit(o));
+    return 0;
 }

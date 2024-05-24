@@ -49,19 +49,19 @@ using isz = std::make_signed_t<std::size_t>;
 ///
 /// (Yes, I know this macro is an abomination, but this is what happens
 /// if you don’t have access to this as a language feature...)
-#define Try(x, ...) ({                                                            \
-    auto _res = x;                                                                \
-    if (not _res) {                                                               \
-        return std::unexpected(                                                   \
-            __VA_OPT__(                                                           \
-                [&]([[maybe_unused]] std::string $) {                             \
-            return __VA_ARGS__;                                                   \
-        }                                                                         \
-            ) __VA_OPT__(LPAREN_) std::move(_res.error()) __VA_OPT__(RPAREN_)     \
-        );                                                                        \
-    }                                                                             \
-    using ResTy = std::remove_reference_t<decltype(*_res)>;                       \
-    static_cast<std::conditional_t<std::is_void_v<ResTy>, void, ResTy&&>>(*_res); \
+#define Try(x, ...) ({                                                        \
+    auto _res = x;                                                            \
+    if (not _res) {                                                           \
+        return std::unexpected(                                               \
+            __VA_OPT__(                                                       \
+                [&]([[maybe_unused]] std::string $) {                         \
+            return __VA_ARGS__;                                               \
+        }                                                                     \
+            ) __VA_OPT__(LPAREN_) std::move(_res.error()) __VA_OPT__(RPAREN_) \
+        );                                                                    \
+    }                                                                         \
+    using ResTy = std::remove_reference_t<decltype(*_res)>;                   \
+    static_cast<typename ::detail::TryResultType<ResTy>::type>(*_res);        \
 })
 // clang-format on
 
@@ -69,6 +69,18 @@ using isz = std::make_signed_t<std::size_t>;
 #if !__has_builtin(__builtin_expect_with_probability)
 #    define __builtin_expect_with_probability(x, y, z) __builtin_expect(x, y)
 #endif
+
+namespace detail {
+template <typename Ty>
+struct TryResultType {
+    using type = std::remove_reference_t<Ty>&&;
+};
+
+template <typename Ty>
+requires std::is_void_v<Ty>
+struct TryResultType<Ty> {
+    using type = void;
+};
 
 template <typename Ty>
 concept Reference = std::is_reference_v<Ty>;
@@ -94,9 +106,11 @@ struct ResultImpl<std::reference_wrapper<Ty>> {
     using type = typename ResultImpl<Ty&>::type;
     static_assert(false, "Use Result<T&> instead of Result<reference_wrapper<T>>");
 };
+}
+
 
 template <typename T = void>
-using Result = typename ResultImpl<T>::type;
+using Result = typename detail::ResultImpl<T>::type;
 
 template <typename... Args>
 [[nodiscard]] auto Error(std::format_string<Args...> fmt, Args&&... args) -> std::unexpected<std::string> {
