@@ -8,7 +8,7 @@
 #include <stream/stream.hh>
 #include <xkb++/layout.hh>
 #include <xkb++/utils.hh>
-#include <xkb++/xkbgen.hh>
+#include <xkb++/main.hh>
 #include <xkbcommon/xkbcommon.h>
 
 constexpr usz LAYER_COUNT = 8;
@@ -165,7 +165,7 @@ auto Layout::Parse(std::string_view text) -> Result<Layout> {
     return L;
 }
 
-auto xkbgen::Main(int argc, char** argv) -> Result<int> {
+auto Main(int argc, char** argv) -> Result<int> {
     auto opts = detail::options::parse(argc, argv);
     auto file = opts.get<"file">();
     auto output = opts.get_or<"-o">("-");

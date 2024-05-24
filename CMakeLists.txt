@@ -142,17 +142,28 @@ target_include_directories(options INTERFACE
     /usr/include/freetype2/ # Required by Xft.
 )
 
-## ============================================================================
-##  Executables and libraries.
-## ============================================================================
-## Add the executable.
-file(GLOB_RECURSE sources src/*.cc include/*.hh)
-add_executable(xkbdisplay ${sources})
-
-## Apply our options.
-target_link_libraries(xkbdisplay PRIVATE
-    options
+target_link_libraries(options INTERFACE
     libstream
     libassert::assert
     X11 Xft xkbcommon
 )
+
+## ============================================================================
+##  Executables and libraries.
+## ============================================================================
+add_library(xkb++ STATIC
+    src/diacritics.cc
+    src/layout.cc
+    src/main.cc
+    src/utils.cc
+)
+
+file(GLOB_RECURSE headers include/*.hh)
+target_sources(xkb++ PUBLIC FILE_SET HEADERS FILES ${headers})
+
+add_executable(xkbdisplay src/xkbdisplay.cc)
+add_executable(xkbgen src/xkbgen.cc)
+
+target_link_libraries(xkb++ PRIVATE options)
+target_link_libraries(xkbdisplay PRIVATE options xkb++)
+target_link_libraries(xkbgen PRIVATE options xkb++)

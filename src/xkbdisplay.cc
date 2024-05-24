@@ -3,7 +3,6 @@
 #include <map>
 #include <print>
 #include <thread>
-#include <unistd.h>
 #include <vector>
 #include <X11/X.h>
 #include <X11/Xft/Xft.h>
@@ -11,7 +10,7 @@
 #include <X11/Xutil.h>
 #include <xkb++/layout.hh>
 #include <xkb++/utils.hh>
-#include <xkb++/xkbdisplay.hh>
+#include <xkb++/main.hh>
 
 // ============================================================================
 //  Context and Data
@@ -130,12 +129,6 @@ constexpr auto XColour(u32 colour) -> XRenderColor {
 // ============================================================================
 //  Initialisation and Main Loop
 // ============================================================================
-auto xkbdisplay::Main(int, char**) -> Result<int> {
-    auto ctx = Try(DisplayContext::Create());
-    ctx->Run();
-    return 0;
-}
-
 DisplayContext::~DisplayContext() {
     if (display) XCloseDisplay(display);
 }
@@ -445,8 +438,8 @@ auto DisplayContext::Font(const std::string& name, u32 font_sz) -> XftFont* {
     return f;
 }
 
-//////////////////////
-//////////////////////
-//////////////////////
-//////////////////////
-//////////////////////
+auto Main(int, char**) -> Result<int> {
+    auto ctx = Try(DisplayContext::Create());
+    ctx->Run();
+    return 0;
+}

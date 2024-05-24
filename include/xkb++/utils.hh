@@ -106,7 +106,7 @@ struct ResultImpl<std::reference_wrapper<Ty>> {
     using type = typename ResultImpl<Ty&>::type;
     static_assert(false, "Use Result<T&> instead of Result<reference_wrapper<T>>");
 };
-}
+} // namespace detail
 
 template <typename T = void>
 using Result = typename detail::ResultImpl<T>::type;
