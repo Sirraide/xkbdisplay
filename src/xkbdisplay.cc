@@ -1,10 +1,29 @@
-#include "x.h"
-
-#include "diacritics.h"
+#include <diacritics.hh>
+#include <xkbdisplay.hh>
 
 #include <unistd.h>
+#include <xkbdisplay.hh>
 
 #define FPS 120
+
+template <typename Pointer>
+auto Verify(Pointer ptr, const std::string& msg = "Pointer was NULL") -> decltype(ptr) {
+	if (!ptr) Die(msg);
+	return ptr;
+}
+
+auto xkbdisplay::Main(int argc, char** argv) {
+    XLib X{};
+
+    X.Run([&](XEvent& e) {
+        switch (e.type) {
+            case ConfigureNotify: {
+                X.Redraw();
+                break;
+            }
+        }
+    });
+}
 
 XLib::XLib() {
 	display = Verify(XOpenDisplay(nullptr), "XOpenDisplay()");

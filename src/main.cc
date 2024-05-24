@@ -1,17 +1,15 @@
-#include "x.h"
+#include <xkbdisplay.hh>
+#include <xkbgen.hh>
 
-#include <clocale>
+auto InvokeMain(int argc, char** argv) -> Result<int> {
+    if (argc < 2 or argv[0] == "xkbdisplay") return xkbdisplay::Main(argc, argv);
+    return xkbgen::Main(argc, argv);
+}
 
-int main(void) {
-	setlocale(LC_ALL, "");
-	XLib X{};
-
-	X.Run([&](XEvent& e) {
-		switch (e.type) {
-			case ConfigureNotify: {
-				X.Redraw();
-				break;
-			}
-		}
-	});
+int main(int argc, char** argv) {
+    auto res = InvokeMain(argc, argv);
+    if (not res) {
+        std::println(stderr, "{}", res.error());
+        return 1;
+    }
 }
