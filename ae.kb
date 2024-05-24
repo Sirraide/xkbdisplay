@@ -55,13 +55,23 @@
 28 = [  l    L    ł    Ł    ʎ    ʟ    ɭ    ɫ  ] # Key: 'L'
 29 = [  ;    :    ¶   " "   ː    ˑ            ] # Key: ';'
 2A = [ "'"  '"'   `    ~    ˈ    ˌ    ′    ″  ] # Key: '''
-2B = [  ̂     ^    ̃     ̰     `    ̌             ] # Key: '#'
+2B = [ # Key: '#'
+    dead_circumflex ^
+    dead_tilde dead_belowtilde
+    dead_caron
+]
 
 # ###########################################################################
 #  Fourth Row (ASDFG...)
 # ###########################################################################
 #       1    2    3    4    5    6    7    8
-30 = [  ́     ̀     ̋     ̏     ̝     ̞     ˔    ˕  ] # Key: '´'
+30 = [ # Key: '´'
+    dead_acute dead_grave
+    dead_doubleacute dead_doublegrave
+    ̝     ̞
+    ˔    ˕
+]
+
 31 = [  z    Z    ʒ    Ʒ    ʐ    ʑ    ̯     ̑   ] # Key: 'Z'
 32 = [  x    X    ®    ©    χ   " "   ʰ    ʱ  ] # Key: 'X'
 33 = [  c    C    ç    Ç    ɟ    ʝ    ʄ    ǃ  ] # Key: 'C'
@@ -69,6 +79,18 @@
 35 = [  b    B    ⱱ    ʙ    ɓ    ʘ            ] # Key: 'B'
 36 = [  n    N    ŋ    Ŋ    ɲ    ɳ    ɴ    ⁿ  ] # Key: 'N'
 37 = [  m    M    µ    ɱ    ̟     ̠     ˖    ˗  ] # Key: 'M'
-38 = [  ,    <    ̨     ̧     ̦    ̓      ̒        ] # Key: ','
-39 = [  .    >    ·    ̬     ̣     ̇     ̥     ̊   ] # Key: '.'
+38 = [ # Key: ','
+    ,    <
+    dead_ogonek dead_cedilla
+    dead_belowcomma dead_abovecomma
+    dead_abovereversedcomma
+]
+
+39 = [ # Key: '.'
+    .    >
+    ·    ̬
+    dead_belowdot dead_abovedot
+    dead_belowring dead_abovering
+]
+
 3A = [  /    \    |                           ] # Key: '/'
