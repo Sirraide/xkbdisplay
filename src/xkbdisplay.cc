@@ -9,6 +9,7 @@
 #include <X11/Xft/Xft.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <xkb++/layout.hh>
 #include <xkb++/utils.hh>
 #include <xkb++/xkbdisplay.hh>
 
@@ -16,11 +17,6 @@
 //  Context and Data
 // ============================================================================
 constexpr usz FPS = 144;
-constexpr usz KEYS_IN_ROW_1 = 13;
-constexpr usz KEYS_IN_ROW_2 = 12;
-constexpr usz KEYS_IN_ROW_3 = 12;
-constexpr usz KEYS_IN_ROW_4 = 11;
-constexpr usz KEY_COUNT = KEYS_IN_ROW_1 + KEYS_IN_ROW_2 + KEYS_IN_ROW_3 + KEYS_IN_ROW_4;
 constexpr int HEIGHT_TIMES_TWO = -1;
 
 struct Text {
@@ -62,10 +58,13 @@ class DisplayContext {
     XftColor xft_grey{};
     XftColor xft_red{};
 
-    std::array<Cell, KEY_COUNT> cells{};
-    std::array<XRectangle, KEY_COUNT> cell_borders{};
     std::vector<Text> menu_text{};
     std::map<std::pair<std::string, u32>, XftFont*> font_cache{};
+
+    /// Cell borders are allocated separately so we can pass them to
+    /// X11 in one go.
+    ISO105<Cell> cells{};
+    ISO105<XRectangle> cell_borders{};
 
     u32 w_width = 1'400;
     u32 w_height = 550;
@@ -150,32 +149,26 @@ auto DisplayContext::Create() -> Result<std::unique_ptr<DisplayContext>> {
 }
 
 void DisplayContext::InitCells() { // clang-format off
-    static constexpr auto label_chars = U"¬1234567890-=QWERTYUIOP[]ASDFGHJKL;'^´ZXCVBNM,./"sv; // +1 because \0
-    static constexpr KeyCode keycodes[KEY_COUNT] = {
-        49, 10, 11, 12, 13, 14, 15, 16, 17, 18,
-        19, 20, 21, 24, 25, 26, 27, 28, 29, 30,
-        31, 32, 33, 34, 35, 38, 39, 40, 41, 42,
-        43, 44, 45, 46, 47, 48, 51, 94, 52, 53,
-        54, 55, 56, 57, 58, 59, 60, 61
-    }; // clang-format on
-
-    for (size_t i = 0; i < KEY_COUNT; i++) {
-        cells[i].label_char = label_chars[i];
-        cells[i].border = cell_borders.data() + i;
-        cells[i].keycode_raw = keycodes[i];
-        cells[i].keycode.content = ToUtf32(std::to_string(keycodes[i]));
-        for (size_t j = 0; j < 8; j++) {
-            ResolveKeysym(cells[i].keysyms[0], keycodes[i], 0);
-            ResolveKeysym(cells[i].keysyms[1], keycodes[i], ShiftMask);
-            ResolveKeysym(cells[i].keysyms[2], keycodes[i], Mod5Mask);
-            ResolveKeysym(cells[i].keysyms[3], keycodes[i], ShiftMask | Mod5Mask);
-            ResolveKeysym(cells[i].keysyms[4], keycodes[i], Mod3Mask);
-            ResolveKeysym(cells[i].keysyms[5], keycodes[i], ShiftMask | Mod3Mask);
-            ResolveKeysym(cells[i].keysyms[6], keycodes[i], Mod5Mask | Mod3Mask);
-            ResolveKeysym(cells[i].keysyms[7], keycodes[i], Mod5Mask | Mod3Mask | ShiftMask);
-        }
+    for (auto [cell, border, keycode, label] : vws::zip(
+        cells.keys(),
+        cell_borders.keys(),
+        ISO105Traits::KeyCodes,
+        ISO105Traits::KeyLabels
+    )) {
+        cell.label_char = label;
+        cell.border = &border;
+        cell.keycode_raw = keycode;
+        cell.keycode.content = ToUtf32(std::to_string(keycode));
+        ResolveKeysym(cell.keysyms[0], keycode, 0);
+        ResolveKeysym(cell.keysyms[1], keycode, ShiftMask);
+        ResolveKeysym(cell.keysyms[2], keycode, Mod5Mask);
+        ResolveKeysym(cell.keysyms[3], keycode, ShiftMask | Mod5Mask);
+        ResolveKeysym(cell.keysyms[4], keycode, Mod3Mask);
+        ResolveKeysym(cell.keysyms[5], keycode, ShiftMask | Mod3Mask);
+        ResolveKeysym(cell.keysyms[6], keycode, Mod5Mask | Mod3Mask);
+        ResolveKeysym(cell.keysyms[7], keycode, Mod5Mask | Mod3Mask | ShiftMask);
     }
-}
+} // clang-format on
 
 auto DisplayContext::InitDisplay() -> Result<> {
     display = XOpenDisplay(nullptr);
@@ -290,8 +283,9 @@ void DisplayContext::Run() {
 //  Character Handling
 // ============================================================================
 void DisplayContext::DrawCells() {
-    XDrawRectangles(display, window, gc, cell_borders.data(), int(cell_borders.size()));
-    for (const auto& cell : cells) {
+    auto borders = cell_borders.keys();
+    XDrawRectangles(display, window, gc, borders.data(), int(borders.size()));
+    for (const auto& cell : cells.keys()) {
         DrawTextElem(cell.label, &xft_grey);
         DrawTextElem(cell.keycode, &xft_grey, Font("Charis SIL", font_sz / 2));
         DrawTextElems(cell.keysyms, &xft_fgcolour, Font("Charis SIL", u32(font_sz / 1.33)));
@@ -306,28 +300,22 @@ void DisplayContext::GenerateKeyboard() {
     const u16 right_margin = u16(w_width - cell_size);
 
     // Figure out where to place the cells and set up the borders around them.
-    auto ComputeBorders = [&, cell_index = usz(0), n = u16(0)](u16 num_keys) mutable { // clang-format off
+    for (usz cell_index = 0, row = 0; row < ISO105Traits::Rows.size(); row++) { // clang-format off
         for (
-            u16 x = u16(gap + n * 2 * gap), i = 0;
-            x < right_margin and i < num_keys;
+            u16 x = u16(gap + row * 2 * gap), i = 0;
+            x < right_margin and i < ISO105Traits::Rows[row];
             x += cell_size + gap, i++
-        ) *cells[cell_index++].border = {
+        ) *cells.keys()[cell_index++].border = {
             .x = i16(x),
-            .y = i16((n + 1) * gap + n * cell_size + top_offset),
+            .y = i16((row + 1) * gap + row * cell_size + top_offset),
             .width = cell_size,
             .height = cell_size,
         };
-        n++;
-    }; // clang-format on
-
-    ComputeBorders(KEYS_IN_ROW_1);
-    ComputeBorders(KEYS_IN_ROW_2);
-    ComputeBorders(KEYS_IN_ROW_3);
-    ComputeBorders(KEYS_IN_ROW_4);
+    } // clang-format on
 
     // Set up the cell labels, keycodes, and keysyms
-    for (usz cell_index = 0, i = 0; i < KEY_COUNT; i++) {
-        auto& cell = cells[cell_index++];
+    for (usz cell_index = 0, i = 0; i < ISO105Traits::KeyCount; i++) {
+        auto& cell = cells.keys()[cell_index++];
         auto* rect = cell.border;
 
         // Compute text extents.

@@ -6,18 +6,18 @@
 #include <print>
 #include <ranges>
 #include <stream/stream.hh>
+#include <xkb++/layout.hh>
 #include <xkb++/utils.hh>
 #include <xkb++/xkbgen.hh>
 #include <xkbcommon/xkbcommon.h>
 
-#define LAYOUT_ISO_105 "iso-105"
 constexpr usz LAYER_COUNT = 8;
 
 namespace detail {
 using namespace command_line_options;
 using options = clopts<
     positional<"file", "The file to translate to a keymap", file<std::string, std::string>>,
-    positional<"layout", "The keyboard layout format to use", values<LAYOUT_ISO_105>>,
+    positional<"layout", "The keyboard layout format to use", values<LAYOUT_NAME_ISO105>>,
     option<"-o", "Output file name">,
     help<>>;
 }
@@ -30,33 +30,15 @@ struct Key {
     std::vector<std::u32string> symbols;
 };
 
-/// The ISO 105-key keyboard layout.
-class ISO105 {
-    std::array<Key, 13> row1;
-    std::array<Key, 12> row2;
-    std::array<Key, 12> row3;
-    std::array<Key, 11> row4;
-
-public:
-    /// Get the XKB name for a key at a given row and index.
-    auto key_name(isz row, isz idx) -> std::string;
-
-    /// Get a range that iterates over all rows.
-    auto rows() -> std::generator<std::span<Key>>;
-
-    /// Get a key at a given row and index.
-    auto operator[](usz row, usz idx) -> Result<Key&>;
-};
-
 class Layout {
-    ISO105 keys;
+    ISO105<Key> keys;
 
 public:
     /// Write the layout to a file.
     auto emit(FILE* out) -> Result<>;
 
     /// Get the keyboard layout.
-    auto raw_layout() -> ISO105& { return keys; }
+    auto raw_layout() -> ISO105<Key>& { return keys; }
 
     /// Parse a keyboard layout from a string.
     static auto Parse(std::string_view text) -> Result<Layout>;
@@ -65,12 +47,6 @@ public:
 // ============================================================================
 //  Helpers
 // ============================================================================
-template <typename Container>
-auto At(Container&& c, usz index) -> Result<typename std::remove_cvref_t<Container>::value_type&> {
-    if (index >= c.size()) return Error("Index {} out of bounds", index);
-    return std::ref(std::forward<Container>(c)[index]);
-}
-
 auto KeySymName(std::u32string_view sym) -> std::string {
     // Symbol is the empty symbol.
     if (sym.empty()) return "NoSymbol";
@@ -93,44 +69,6 @@ auto KeySymName(std::u32string_view sym) -> std::string {
 // ============================================================================
 //  Layout Implementation
 // ============================================================================
-auto ISO105::key_name(isz row, isz idx) -> std::string {
-    switch (row) {
-        default: Unreachable();
-        case 0: {
-            if (idx == 0) return "TLDE";
-            return std::format("AE{:02}", idx);
-        }
-
-        case 1: return std::format("AD{:02}", idx + 1);
-        case 2: {
-            if (idx == 12) return "BKSL";
-            return std::format("AC{:02}", idx + 1);
-        }
-
-        case 3: {
-            if (idx == 0) return "LSGT";
-            return std::format("AB{:02}", idx + 1);
-        }
-    }
-}
-
-auto ISO105::rows() -> std::generator<std::span<Key>> {
-    co_yield row1;
-    co_yield row2;
-    co_yield row3;
-    co_yield row4;
-}
-
-auto ISO105::operator[](usz row, usz idx) -> Result<Key&> {
-    switch (row) {
-        case 0: return At(row1, idx);
-        case 1: return At(row2, idx);
-        case 2: return At(row3, idx);
-        case 3: return At(row4, idx);
-        default: return Error("Invalid row index {}@{}", row, idx);
-    }
-}
-
 auto Layout::emit(FILE* o) -> Result<> {
     // Write header.
     std::println(o, "default xkb_symbols \"basic\" {{");
@@ -142,7 +80,7 @@ auto Layout::emit(FILE* o) -> Result<> {
     for (auto [row, keys_in_row] : keys.rows() | vws::enumerate) {
         for (auto [col, key] : keys_in_row | vws::enumerate) {
             bool first = true;
-            std::print(o, "    key <{}> {{ [", keys.key_name(row, col));
+            std::print(o, "    key <{}> {{ [", ISO105Traits::KeyName(row, col));
             for (const auto& sym : key.symbols) {
                 if (first) first = false;
                 else std::print(o, ", ");

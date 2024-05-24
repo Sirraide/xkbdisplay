@@ -7,5 +7,4 @@ namespace xkbdisplay {
 auto Main(int argc, char** argv) -> Result<int>;
 }
 
-
 #endif // XKBDISPLAY_X_H

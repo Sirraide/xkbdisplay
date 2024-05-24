@@ -108,13 +108,18 @@ struct ResultImpl<std::reference_wrapper<Ty>> {
 };
 }
 
-
 template <typename T = void>
 using Result = typename detail::ResultImpl<T>::type;
 
 template <typename... Args>
 [[nodiscard]] auto Error(std::format_string<Args...> fmt, Args&&... args) -> std::unexpected<std::string> {
     return std::unexpected(std::format(fmt, std::forward<Args>(args)...));
+}
+
+template <typename Container>
+auto At(Container&& c, usz index) -> Result<typename std::remove_cvref_t<Container>::value_type&> {
+    if (index >= c.size()) return Error("Index {} out of bounds", index);
+    return std::ref(std::forward<Container>(c)[index]);
 }
 
 [[nodiscard]] bool IsDiacritic(char32_t c);
