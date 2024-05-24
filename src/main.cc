@@ -1,5 +1,6 @@
-#include <xkbdisplay.hh>
-#include <xkbgen.hh>
+#include <xkb++/xkbdisplay.hh>
+#include <xkb++/xkbgen.hh>
+#include <print>
 
 auto InvokeMain(int argc, char** argv) -> Result<int> {
     if (argc < 2 or argv[0] == "xkbdisplay") return xkbdisplay::Main(argc, argv);

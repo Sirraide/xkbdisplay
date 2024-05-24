@@ -110,7 +110,11 @@ target_link_options(options INTERFACE
     $<$<CONFIG:RELEASE>:-O3 -march=native>
 )
 
+## ============================================================================
+##  Dependencies.
+## ============================================================================
 include(FetchContent)
+
 FetchContent_Declare(clopts
     GIT_REPOSITORY https://github.com/Sirraide/clopts
     GIT_TAG        v2.2.1
@@ -123,19 +127,31 @@ FetchContent_Declare(stream
     SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libs/stream"
 )
 
+FetchContent_Declare(
+  libassert
+  GIT_REPOSITORY https://github.com/jeremy-rifkin/libassert.git
+  GIT_TAG        v2.0.2
+)
+
+FetchContent_MakeAvailable(libassert)
 FetchContent_MakeAvailable(clopts)
 FetchContent_MakeAvailable(stream)
 target_include_directories(options INTERFACE
     "${clopts_SOURCE_DIR}/include"
-    "${PROJECT_SOURCE_DIR}/src"
+    "${PROJECT_SOURCE_DIR}/include"
 )
 
 ## ============================================================================
 ##  Executables and libraries.
 ## ============================================================================
 ## Add the executable.
-file(GLOB_RECURSE sources "src/*.cc" "src/*.hh")
+file(GLOB_RECURSE sources src/*.cc include/*.hh)
 add_executable(xkbdisplay ${sources})
 
 ## Apply our options.
-target_link_libraries(xkbdisplay PRIVATE options X11 Xft libstream xkbcommon)
+target_link_libraries(xkbdisplay PRIVATE
+    options
+    libstream
+    libassert::assert
+    X11 Xft xkbcommon
+)

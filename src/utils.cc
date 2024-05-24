@@ -1,11 +1,16 @@
-#include "utils.h"
+#include <codecvt>
+#include <xkb++/utils.hh>
 
-std::string ToUTF8(const std::u32string& what) {
-	std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
-	return conv.to_bytes(what);
+auto ToUtf8(std::u32string_view sv) -> std::string {
+    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
+    return conv.to_bytes(sv.data(), sv.data() + sv.size());
 }
 
-std::u32string ToUTF32(const std::string& what) {
-	std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
-	return conv.from_bytes(what);
+auto ToUtf8(char32_t sv) -> std::string {
+    return ToUtf8(std::u32string_view{&sv, 1});
+}
+
+auto ToUtf32(std::string_view sv) -> std::u32string {
+    std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t> conv;
+    return conv.from_bytes(sv.data(), sv.data() + sv.size());
 }

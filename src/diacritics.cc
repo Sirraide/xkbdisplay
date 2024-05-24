@@ -1,7 +1,9 @@
-#define MAX_DIACRITICS (0x3134A)
+static constexpr __SIZE_TYPE__ MAX_DIACRITICS = 0x3134A;
 
 // clang-format off
-static const unsigned char DIACRITICS_TABLE[] = { // 25193
+// One bit in this table corresponds to one character; the bit
+// is set iff the character is a diacritic.
+static constexpr unsigned char DIACRITICS_TABLE[] = { // 25193
 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 
 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 
 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 0b00000000, 
@@ -3155,7 +3157,7 @@ static const unsigned char DIACRITICS_TABLE[] = { // 25193
 };
 // clang-format on
 
-
-unsigned char IsDiacritic(int c) {
-	return c > MAX_DIACRITICS ? 0 : (DIACRITICS_TABLE[(c & ~0b111) >> 3] >> (c & 0b111)) & 1;
+bool IsDiacritic(char32_t c) {
+    auto i = static_cast<unsigned>(c);
+	return i <= MAX_DIACRITICS and DIACRITICS_TABLE[(i & ~0b111u) >> 3u] >> (i & 0b111u) & 1u;
 }
