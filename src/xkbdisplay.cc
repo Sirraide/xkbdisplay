@@ -1,4 +1,5 @@
 #include <chrono>
+#include <clopts.hh>
 #include <functional>
 #include <map>
 #include <print>
@@ -9,8 +10,16 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <xkb++/layout.hh>
-#include <xkb++/utils.hh>
 #include <xkb++/main.hh>
+#include <xkb++/utils.hh>
+
+namespace detail {
+using namespace command_line_options;
+using options = clopts< // clang-format off
+    option<"-f", "The font to use">,
+    help<>
+>; // clang-format on
+}
 
 // ============================================================================
 //  Context and Data
@@ -58,6 +67,7 @@ class DisplayContext {
     XftColor xft_red{};
 
     std::vector<Text> menu_text{};
+    std::string font_name;
     std::map<std::pair<std::string, u32>, XftFont*> font_cache{};
 
     /// Cell borders are allocated separately so we can pass them to
@@ -83,7 +93,7 @@ public:
     void Run();
 
     /// Create a new display context.
-    static auto Create() -> Result<std::unique_ptr<DisplayContext>>;
+    static auto Create(std::string font) -> Result<std::unique_ptr<DisplayContext>>;
 
 private:
     DisplayContext() = default;
@@ -133,8 +143,9 @@ DisplayContext::~DisplayContext() {
     if (display) XCloseDisplay(display);
 }
 
-auto DisplayContext::Create() -> Result<std::unique_ptr<DisplayContext>> {
+auto DisplayContext::Create(std::string font) -> Result<std::unique_ptr<DisplayContext>> {
     std::unique_ptr<DisplayContext> C{new DisplayContext()};
+    C->font_name = std::move(font);
     Try(C->InitDisplay());
     Try(C->InitFonts());
     C->InitCells();
@@ -218,7 +229,7 @@ void DisplayContext::Redraw() {
     );
 
     font_sz = RelativeToWidth(.015);
-    font = Font("Charis SIL", font_sz);
+    font = Font(font_name, font_sz);
 
     GenerateKeyboard();
     GenerateMenuText();
@@ -280,8 +291,8 @@ void DisplayContext::DrawCells() {
     XDrawRectangles(display, window, gc, borders.data(), int(borders.size()));
     for (const auto& cell : cells.keys()) {
         DrawTextElem(cell.label, &xft_grey);
-        DrawTextElem(cell.keycode, &xft_grey, Font("Charis SIL", font_sz / 2));
-        DrawTextElems(cell.keysyms, &xft_fgcolour, Font("Charis SIL", u32(font_sz / 1.33)));
+        DrawTextElem(cell.keycode, &xft_grey, Font(font_name, font_sz / 2));
+        DrawTextElems(cell.keysyms, &xft_fgcolour, Font(font_name, u32(font_sz / 1.33)));
     }
     DrawTextElems(menu_text, &xft_fgcolour);
 }
@@ -340,8 +351,12 @@ void DisplayContext::GenerateKeyboard() {
 
 void DisplayContext::GenerateMenuText() {
     menu_text.clear();
-    std::u32string font_name = U"Font: Charis SIL " + ToUtf32(std::to_string(int(font_sz)));
-    DrawCentredTextAt(font_name, w_width / 2, HEIGHT_TIMES_TWO);
+    std::u32string f;
+    f += U"Font: ";
+    f += ToUtf32(font_name);
+    f += U" ";
+    f += ToUtf32(std::to_string(int(font_sz)));
+    DrawCentredTextAt(f, int(w_width / 2u), HEIGHT_TIMES_TWO);
 }
 
 void DisplayContext::ResolveKeysym(Text& text, KeyCode code, u32 state) const {
@@ -438,8 +453,9 @@ auto DisplayContext::Font(const std::string& name, u32 font_sz) -> XftFont* {
     return f;
 }
 
-auto Main(int, char**) -> Result<int> {
-    auto ctx = Try(DisplayContext::Create());
+auto Main(int argc, char** argv) -> Result<int> {
+    auto opts = detail::options::parse(argc, argv);
+    auto ctx = Try(DisplayContext::Create(opts.get_or<"-f">("Charis SIL")));
     ctx->Run();
     return 0;
 }
