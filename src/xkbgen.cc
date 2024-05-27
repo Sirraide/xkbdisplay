@@ -77,7 +77,7 @@ auto Layout::emit(FILE* o) -> Result<> {
     std::println(o, "    key.type[Group1] = \"EIGHT_LEVEL\";");
 
     // Write keys.
-    for (auto [row, keys_in_row] : keys.rows() | vws::enumerate) {
+    keys.for_all_rows([&, row = 0] (auto keys_in_row) mutable {
         for (auto [col, key] : keys_in_row | vws::enumerate) {
             bool first = true;
             std::print(o, "    key <{}> {{ [", ISO105Traits::KeyName(row, col));
@@ -93,7 +93,9 @@ auto Layout::emit(FILE* o) -> Result<> {
 
             std::println(o, "] }};");
         }
-    }
+
+        row++;
+    });
 
     // Write modifier keys.
     std::println(o);

@@ -3,6 +3,7 @@
 #include <functional>
 #include <map>
 #include <print>
+#include <ranges>
 #include <thread>
 #include <vector>
 #include <X11/X.h>

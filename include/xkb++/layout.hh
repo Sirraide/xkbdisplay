@@ -2,7 +2,7 @@
 #define LAYOUT_HH
 
 #include <array>
-#include <generator>
+#include <functional>
 #include <span>
 #include <X11/X.h>
 #include <xkb++/utils.hh>
@@ -41,10 +41,11 @@ public:
     auto keys() -> std::span<KeyType> { return key_array; }
 
     /// Get a range that iterates over all rows.
-    auto rows() -> std::generator<std::span<KeyType>> {
+    template <typename Callable>
+    void for_all_rows(Callable cb) {
         usz start = 0;
         for (auto row : Traits::Rows) {
-            co_yield std::span<KeyType>(key_array.data() + start, row);
+            std::invoke(cb, std::span<KeyType>(key_array.data() + start, row));
             start += row;
         }
     }
