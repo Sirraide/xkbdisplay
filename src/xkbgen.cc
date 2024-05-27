@@ -2,13 +2,12 @@
 #include <array>
 #include <charconv>
 #include <clopts.hh>
-#include <generator>
 #include <print>
 #include <ranges>
 #include <stream/stream.hh>
 #include <xkb++/layout.hh>
-#include <xkb++/utils.hh>
 #include <xkb++/main.hh>
+#include <xkb++/utils.hh>
 #include <xkbcommon/xkbcommon.h>
 
 constexpr usz LAYER_COUNT = 8;
@@ -77,7 +76,7 @@ auto Layout::emit(FILE* o) -> Result<> {
     std::println(o, "    key.type[Group1] = \"EIGHT_LEVEL\";");
 
     // Write keys.
-    keys.for_all_rows([&, row = 0] (auto keys_in_row) mutable {
+    keys.for_all_rows([&, row = 0](auto keys_in_row) mutable {
         for (auto [col, key] : keys_in_row | vws::enumerate) {
             bool first = true;
             std::print(o, "    key <{}> {{ [", ISO105Traits::KeyName(row, col));
