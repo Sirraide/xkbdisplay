@@ -58,7 +58,7 @@
 2B = [ # Key: '#'
     dead_circumflex ^
     dead_tilde dead_belowtilde
-    dead_caron
+    dead_caron ⁓
 ]
 
 # ###########################################################################
