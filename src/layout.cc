@@ -1,6 +1,6 @@
 #include <xkb++/layout.hh>
 
-auto ISO105Traits::KeyName(isz row, isz idx) -> std::string {
+auto layout::ISO105Traits::KeyName(isz row, isz idx) -> std::string {
     switch (row) {
         default: Unreachable();
         case 0: {

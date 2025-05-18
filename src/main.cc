@@ -9,5 +9,5 @@ int main(int argc, char** argv) {
         std::println(stderr, "{}", res.error());
         return 1;
     }
-    return *res;
+    return res.value();
 }

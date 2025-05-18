@@ -4,22 +4,18 @@
 #include <clopts.hh>
 #include <print>
 #include <ranges>
-#include <stream/stream.hh>
+
+#include <base/Base.hh>
+#include <base/Text.hh>
+
 #include <xkb++/layout.hh>
 #include <xkb++/main.hh>
-#include <xkb++/utils.hh>
 #include <xkbcommon/xkbcommon.h>
 
-constexpr usz LAYER_COUNT = 8;
+using namespace base;
+using namespace layout;
 
-namespace detail {
-using namespace command_line_options;
-using options = clopts<
-    positional<"file", "The file to translate to a keymap", file<std::string, std::string>>,
-    positional<"layout", "The keyboard layout format to use", values<LAYOUT_NAME_ISO105>>,
-    option<"-o", "Output file name">,
-    help<>>;
-}
+constexpr usz LAYER_COUNT = 8;
 
 // ============================================================================
 //  Layout Definition
@@ -51,7 +47,7 @@ auto KeySymName(std::u32string_view sym) -> std::string {
     if (sym.empty()) return "NoSymbol";
 
     // Symbol is the name of a symbol.
-    if (sym.size() != 1) return ToUtf8(sym);
+    if (sym.size() != 1) return text::ToUTF8(sym);
 
     // Symbol is a single keysym. It may have a name in XKB.
     std::array<char, 1'024> buf;
@@ -110,17 +106,17 @@ auto Layout::emit(FILE* o) -> Result<> {
 
 auto Layout::Parse(std::string_view text) -> Result<Layout> {
     Layout L;
-    using Stream = streams::u32stream;
+    using Stream = u32stream;
 
     static constexpr auto Digit = [](char32_t c) -> Result<usz> {
         if (U'0' <= c and c <= U'9') return usz(c - U'0');
         if (U'A' <= c and c <= U'Z') return usz(c - U'A' + 10);
         if (U'a' <= c and c <= U'z') return usz(c - U'a' + 10);
-        return Error("Invalid digit '{}'", ToUtf8(c));
+        return Error("Invalid digit '{}'", text::ToUTF8(c));
     };
 
     // Remove comments.
-    auto converted = ToUtf32(text);
+    auto converted = text::ToUTF32(text);
     std::u32string text_no_comments;
     for (auto l : Stream{converted}.lines()) {
         l = l.take_until([prev = char32_t(0)](char32_t c) mutable {
@@ -167,7 +163,14 @@ auto Layout::Parse(std::string_view text) -> Result<Layout> {
 }
 
 auto Main(int argc, char** argv) -> Result<int> {
-    auto opts = detail::options::parse(argc, argv);
+    using namespace command_line_options;
+    using options = clopts<
+        positional<"file", "The file to translate to a keymap", file<std::string, std::string>>,
+        positional<"layout", "The keyboard layout format to use", values<LAYOUT_NAME_ISO105>>,
+        option<"-o", "Output file name">,
+        help<>>;
+
+    auto opts = options::parse(argc, argv);
     auto file = opts.get<"file">();
     auto output = opts.get_or<"-o">("-");
     auto o = output == "-"sv ? stdout : fopen(output.data(), "w");

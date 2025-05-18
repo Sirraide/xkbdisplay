@@ -5,11 +5,13 @@
 #include <functional>
 #include <span>
 #include <X11/X.h>
-#include <xkb++/utils.hh>
+#include <base/Base.hh>
 
 /// Libclopts unfortunately only accepts string literals in values<> options...
 #define LAYOUT_NAME_ISO105 "iso-105"
 
+namespace layout {
+using namespace base;
 struct ISO105Traits {
     static constexpr std::array<usz, 4> Rows = {13, 12, 12, 11};
     static constexpr usz KeyCount = 13 + 12 + 12 + 11;
@@ -56,10 +58,10 @@ public:
             case 3: idx += Traits::Rows[2]; [[fallthrough]];
             case 2: idx += Traits::Rows[1]; [[fallthrough]];
             case 1: idx += Traits::Rows[0]; [[fallthrough]];
-            case 0: return At(key_array, idx);
+            case 0: return key_array[idx];
             default: return Error("Invalid row index {}@{}", row, idx);
         }
     }
 };
-
+}
 #endif // LAYOUT_HH

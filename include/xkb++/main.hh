@@ -1,8 +1,8 @@
 #ifndef MAIN_HH
 #define MAIN_HH
 
-#include <xkb++/utils.hh>
+#include <base/Base.hh>
 
-auto Main(int argc, char**argv) -> Result<int>;
+auto Main(int argc, char** argv) -> base::Result<int>;
 
-#endif //MAIN_HH
+#endif // MAIN_HH

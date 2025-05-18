@@ -4,7 +4,7 @@ project(xkbdisplay VERSION 0.1.0 LANGUAGES CXX)
 ## ============================================================================
 ##  Global CMake Variables.
 ## ============================================================================
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -114,50 +114,28 @@ target_link_options(options INTERFACE
 ## ============================================================================
 include(FetchContent)
 
-FetchContent_Declare(clopts
-    GIT_REPOSITORY https://github.com/Sirraide/clopts
-    GIT_TAG        v2.2.1
-    SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libs/clopts"
+FetchContent_Declare(libbase
+    GIT_REPOSITORY https://github.com/Sirraide/libbase
 )
+FetchContent_MakeAvailable(libbase)
 
-FetchContent_Declare(stream
-    GIT_REPOSITORY https://github.com/Sirraide/libstream
-    GIT_TAG        master
-    SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libs/stream"
-)
-
-FetchContent_Declare(
-  libassert
-  GIT_REPOSITORY https://github.com/jeremy-rifkin/libassert.git
-  GIT_TAG        v2.0.2
-)
-
-FetchContent_MakeAvailable(libassert)
-FetchContent_MakeAvailable(clopts)
-FetchContent_MakeAvailable(stream)
 target_include_directories(options INTERFACE
-    "${clopts_SOURCE_DIR}/include"
     "${PROJECT_SOURCE_DIR}/include"
     /usr/include/freetype2/ # Required by Xft.
 )
 
 target_link_libraries(options INTERFACE
-    libstream
-    libassert::assert
+    libbase
     X11 Xft xkbcommon
 )
 
 ## ============================================================================
 ##  Executables and libraries.
 ## ============================================================================
-add_library(xkb++ STATIC
-    src/diacritics.cc
-    src/layout.cc
-    src/main.cc
-    src/utils.cc
-)
-
 file(GLOB_RECURSE headers include/*.hh)
+file(GLOB_RECURSE sources src/*.cc)
+
+add_library(xkb++ STATIC ${sources})
 target_sources(xkb++ PUBLIC FILE_SET HEADERS FILES ${headers})
 
 add_executable(xkbdisplay src/xkbdisplay.cc)

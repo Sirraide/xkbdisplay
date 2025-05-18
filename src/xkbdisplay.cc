@@ -6,21 +6,19 @@
 #include <ranges>
 #include <thread>
 #include <vector>
+
+#include <base/Base.hh>
+#include <base/Text.hh>
+
 #include <X11/X.h>
 #include <X11/Xft/Xft.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <xkb++/layout.hh>
 #include <xkb++/main.hh>
-#include <xkb++/utils.hh>
 
-namespace detail {
-using namespace command_line_options;
-using options = clopts< // clang-format off
-    option<"-f", "The font to use">,
-    help<>
->; // clang-format on
-}
+using namespace base;
+using namespace layout;
 
 // ============================================================================
 //  Context and Data
@@ -137,6 +135,17 @@ constexpr auto XColour(u32 colour) -> XRenderColor {
     };
 }
 
+bool IsDiacritic(c32 c) {
+    switch (c.category()) {
+        default: return false;
+        case text::CharCategory::CombiningSpacingMark:
+        case text::CharCategory::EnclosingMark:
+        case text::CharCategory::NonSpacingMark:
+        case text::CharCategory::ConnectorPunctuation:
+            return true;
+    }
+}
+
 // ============================================================================
 //  Initialisation and Main Loop
 // ============================================================================
@@ -163,7 +172,7 @@ void DisplayContext::InitCells() { // clang-format off
         cell.label_char = label;
         cell.border = &border;
         cell.keycode_raw = keycode;
-        cell.keycode.content = ToUtf32(std::to_string(keycode));
+        cell.keycode.content = text::ToUTF32(std::to_string(keycode));
         ResolveKeysym(cell.keysyms[0], keycode, 0);
         ResolveKeysym(cell.keysyms[1], keycode, ShiftMask);
         ResolveKeysym(cell.keysyms[2], keycode, Mod5Mask);
@@ -354,9 +363,9 @@ void DisplayContext::GenerateMenuText() {
     menu_text.clear();
     std::u32string f;
     f += U"Font: ";
-    f += ToUtf32(font_name);
+    f += text::ToUTF32(font_name);
     f += U" ";
-    f += ToUtf32(std::to_string(int(font_sz)));
+    f += text::ToUTF32(std::to_string(int(font_sz)));
     DrawCentredTextAt(f, int(w_width / 2u), HEIGHT_TIMES_TWO);
 }
 
@@ -379,7 +388,7 @@ void DisplayContext::ResolveKeysym(Text& text, KeyCode code, u32 state) const {
         // but I recall having to add that for some reason, so I’m not removing
         // it now...
         try {
-            text.content = ToUtf32(std::string_view{buf.data(), usz(size)});
+            text.content = text::ToUTF32(std::string_view{buf.data(), usz(size)});
             text.diacritic = std::string_view(XKeysymToString(sym)).starts_with("dead") || IsDiacritic(text.content[0]);
             if (text.diacritic) text.content = U"◌" + text.content;
         } catch (...) {
@@ -455,7 +464,13 @@ auto DisplayContext::Font(const std::string& name, u32 font_sz) -> XftFont* {
 }
 
 auto Main(int argc, char** argv) -> Result<int> {
-    auto opts = detail::options::parse(argc, argv);
+    using namespace command_line_options;
+    using options = clopts< // clang-format off
+        option<"-f", "The font to use">,
+        help<>
+    >; // clang-format on
+
+    auto opts = options::parse(argc, argv);
     auto ctx = Try(DisplayContext::Create(opts.get_or<"-f">("Charis SIL")));
     ctx->Run();
     return 0;
