@@ -471,7 +471,7 @@ auto Main(int argc, char** argv) -> Result<int> {
     >; // clang-format on
 
     auto opts = options::parse(argc, argv);
-    auto ctx = Try(DisplayContext::Create(opts.get_or<"-f">("Charis SIL")));
+    auto ctx = Try(DisplayContext::Create(opts.get<"-f">("Charis SIL")));
     ctx->Run();
     return 0;
 }

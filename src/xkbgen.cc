@@ -30,7 +30,7 @@ class Layout {
 
 public:
     /// Write the layout to a file.
-    auto emit(FILE* out) -> Result<>;
+    auto emit(FILE* out, std::string_view name) -> Result<>;
 
     /// Get the keyboard layout.
     auto raw_layout() -> ISO105<Key>& { return keys; }
@@ -64,10 +64,10 @@ auto KeySymName(std::u32string_view sym) -> std::string {
 // ============================================================================
 //  Layout Implementation
 // ============================================================================
-auto Layout::emit(FILE* o) -> Result<> {
+auto Layout::emit(FILE* o, std::string_view name) -> Result<> {
     // Write header.
     std::println(o, "default xkb_symbols \"basic\" {{");
-    std::println(o, "    name[Group1]=\"English with IPA\";");
+    std::println(o, "    name[Group1]=\"{}\";", name);
     std::println(o);
     std::println(o, "    key.type[Group1] = \"EIGHT_LEVEL\";");
 
@@ -167,15 +167,17 @@ auto Main(int argc, char** argv) -> Result<int> {
     using options = clopts<
         positional<"file", "The file to translate to a keymap", file<std::string, std::string>>,
         positional<"layout", "The keyboard layout format to use", values<LAYOUT_NAME_ISO105>>,
+        positional<"name", "The name of the kayout">,
         option<"-o", "Output file name">,
         help<>>;
 
     auto opts = options::parse(argc, argv);
     auto file = opts.get<"file">();
-    auto output = opts.get_or<"-o">("-");
+    auto output = opts.get<"-o">("-");
+    auto name = opts.get<"name">();
     auto o = output == "-"sv ? stdout : fopen(output.data(), "w");
     if (not o) return Error("Failed to open output file '{}'", output);
     auto layout = Try(Layout::Parse(file->contents));
-    Try(layout.emit(o));
+    Try(layout.emit(o, *name));
     return 0;
 }
