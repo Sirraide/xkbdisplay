@@ -50,6 +50,7 @@ class DisplayContext {
     static constexpr u32 base_height = 550;
     static constexpr u32 base_line_width = 2;
 
+    const LayoutDescription* layout{};
     Display* display{};
     Window window{};
     Atom delete_window{};
@@ -71,8 +72,8 @@ class DisplayContext {
 
     /// Cell borders are allocated separately so we can pass them to
     /// X11 in one go.
-    Layout<Cell, ISO105Traits> cells{};
-    Layout<XRectangle, ISO105Traits> cell_borders{};
+    std::vector<Cell> cells{layout->num_keys()};
+    std::vector<XRectangle> cell_borders{layout->num_keys()};
 
     u32 w_width = 1'400;
     u32 w_height = 550;
@@ -92,10 +93,10 @@ public:
     void Run();
 
     /// Create a new display context.
-    static auto Create(std::string font) -> Result<std::unique_ptr<DisplayContext>>;
+    static auto Create(std::string font, std::string_view layout) -> Result<std::unique_ptr<DisplayContext>>;
 
 private:
-    DisplayContext() = default;
+    explicit DisplayContext(const LayoutDescription* ld) : layout{ld} {}
 
     void DrawCells();
     void DrawCentredTextAt(const std::u32string& text, int xpos, int ypos);
@@ -153,8 +154,13 @@ DisplayContext::~DisplayContext() {
     if (display) XCloseDisplay(display);
 }
 
-auto DisplayContext::Create(std::string font) -> Result<std::unique_ptr<DisplayContext>> {
-    std::unique_ptr<DisplayContext> C{new DisplayContext()};
+auto DisplayContext::Create(std::string font, std::string_view layout) -> Result<std::unique_ptr<DisplayContext>> {
+    const LayoutDescription* ld{};
+    if (layout == LAYOUT_NAME_ISO105) ld = &ISO105;
+    else if (layout == LAYOUT_NAME_ANSI104) ld = &ANSI104;
+    else Unreachable("Invalid layout");
+
+    std::unique_ptr<DisplayContext> C{new DisplayContext(ld)};
     C->font_name = std::move(font);
     Try(C->InitDisplay());
     Try(C->InitFonts());
@@ -164,10 +170,10 @@ auto DisplayContext::Create(std::string font) -> Result<std::unique_ptr<DisplayC
 
 void DisplayContext::InitCells() { // clang-format off
     for (auto [cell, border, keycode, label] : vws::zip(
-        cells.keys(),
-        cell_borders.keys(),
-        ISO105Traits::KeyCodes,
-        ISO105Traits::KeyLabels
+        cells,
+        cell_borders,
+        layout->codes,
+        layout->labels
     )) {
         cell.label_char = label;
         cell.border = &border;
@@ -297,9 +303,9 @@ void DisplayContext::Run() {
 //  Character Handling
 // ============================================================================
 void DisplayContext::DrawCells() {
-    auto borders = cell_borders.keys();
+    auto borders = cell_borders;
     XDrawRectangles(display, window, gc, borders.data(), int(borders.size()));
-    for (const auto& cell : cells.keys()) {
+    for (const auto& cell : cells) {
         DrawTextElem(cell.label, &xft_grey);
         DrawTextElem(cell.keycode, &xft_grey, Font(font_name, font_sz / 2));
         DrawTextElems(cell.keysyms, &xft_fgcolour, Font(font_name, u32(font_sz / 1.33)));
@@ -314,12 +320,12 @@ void DisplayContext::GenerateKeyboard() {
     const u16 right_margin = u16(w_width - cell_size);
 
     // Figure out where to place the cells and set up the borders around them.
-    for (usz cell_index = 0, row = 0; row < ISO105Traits::Rows.size(); row++) { // clang-format off
+    for (usz cell_index = 0, row = 0; row < layout->rows.size(); row++) { // clang-format off
         for (
             u16 x = u16(gap + row * 2 * gap), i = 0;
-            x < right_margin and i < ISO105Traits::Rows[row];
+            x < right_margin and i < layout->rows[row];
             x += cell_size + gap, i++
-        ) *cells.keys()[cell_index++].border = {
+        ) *cells[cell_index++].border = {
             .x = i16(x),
             .y = i16((row + 1) * gap + row * cell_size + top_offset),
             .width = cell_size,
@@ -328,8 +334,8 @@ void DisplayContext::GenerateKeyboard() {
     } // clang-format on
 
     // Set up the cell labels, keycodes, and keysyms
-    for (usz cell_index = 0, i = 0; i < ISO105Traits::KeyCount; i++) {
-        auto& cell = cells.keys()[cell_index++];
+    for (usz cell_index = 0, i = 0; i < layout->num_keys(); i++) {
+        auto& cell = cells[cell_index++];
         auto* rect = cell.border;
 
         // Compute text extents.
@@ -361,12 +367,8 @@ void DisplayContext::GenerateKeyboard() {
 
 void DisplayContext::GenerateMenuText() {
     menu_text.clear();
-    std::u32string f;
-    f += U"Font: ";
-    f += text::ToUTF32(font_name);
-    f += U" ";
-    f += text::ToUTF32(std::to_string(int(font_sz)));
-    DrawCentredTextAt(f, int(w_width / 2u), HEIGHT_TIMES_TWO);
+    auto text = std::format("Font: {} {}, Layout: {}", font_name, font_sz, layout->name);
+    DrawCentredTextAt(text::ToUTF32(text), int(w_width / 2u), HEIGHT_TIMES_TWO);
 }
 
 void DisplayContext::ResolveKeysym(Text& text, KeyCode code, u32 state) const {
@@ -466,12 +468,15 @@ auto DisplayContext::Font(const std::string& name, u32 font_sz) -> XftFont* {
 auto Main(int argc, char** argv) -> Result<int> {
     using namespace command_line_options;
     using options = clopts< // clang-format off
+        positional<"layout", "The layout to use", values<LAYOUT_NAME_ISO105, LAYOUT_NAME_ANSI104>, false>,
         option<"-f", "The font to use">,
         help<>
     >; // clang-format on
 
     auto opts = options::parse(argc, argv);
-    auto ctx = Try(DisplayContext::Create(opts.get<"-f">("Charis SIL")));
+    auto font = opts.get<"-f">("Charis SIL");
+    auto layout = opts.get<"layout">(std::getenv("XKBDISPLAY_DEFAULT_LAYOUT") ?: LAYOUT_NAME_ISO105);
+    auto ctx = Try(DisplayContext::Create(font, layout));
     ctx->Run();
     return 0;
 }
