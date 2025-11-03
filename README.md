@@ -21,13 +21,13 @@ This means that the keycode that corresponds to the `1` key is `10`; armed with 
 knowledge, open `/usr/share/X11/xkb/keycodes/evdev`, where you’ll see something like
 this
 ```ini
-    <TLDE> = 49; 
-    <AE01> = 10; 
-    <AE02> = 11; 
-    <AE03> = 12; 
-    <AE04> = 13; 
-    <AE05> = 14; 
-    ...
+<TLDE> = 49; 
+<AE01> = 10; 
+<AE02> = 11; 
+<AE03> = 12; 
+<AE04> = 13; 
+<AE05> = 14; 
+...
 ```
 This tells us that the name corresponding of the key with keycode `10` (i.e. the `1`
 key) is `<AE01>`, which means that we can assign characters to the `1` as follows:
