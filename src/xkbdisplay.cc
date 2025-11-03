@@ -71,8 +71,8 @@ class DisplayContext {
 
     /// Cell borders are allocated separately so we can pass them to
     /// X11 in one go.
-    ISO105<Cell> cells{};
-    ISO105<XRectangle> cell_borders{};
+    Layout<Cell, ISO105Traits> cells{};
+    Layout<XRectangle, ISO105Traits> cell_borders{};
 
     u32 w_width = 1'400;
     u32 w_height = 550;

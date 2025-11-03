@@ -20,23 +20,20 @@ constexpr usz LAYER_COUNT = 8;
 // ============================================================================
 //  Layout Definition
 // ============================================================================
-/// A single physical key on a keyboard layout.
-struct Key {
-    std::vector<std::u32string> symbols;
-};
+class ParsedLayout {
+    struct Record {
+        std::u32string name;
+        std::vector<std::u32string> symbols;
+    };
 
-class Layout {
-    ISO105<Key> keys;
+    std::vector<Record> records;
 
 public:
     /// Write the layout to a file.
     auto emit(FILE* out, std::string_view name) -> Result<>;
 
-    /// Get the keyboard layout.
-    auto raw_layout() -> ISO105<Key>& { return keys; }
-
     /// Parse a keyboard layout from a string.
-    static auto Parse(std::string_view text) -> Result<Layout>;
+    static auto Parse(std::string_view text) -> Result<ParsedLayout>;
 };
 
 // ============================================================================
@@ -64,33 +61,28 @@ auto KeySymName(std::u32string_view sym) -> std::string {
 // ============================================================================
 //  Layout Implementation
 // ============================================================================
-auto Layout::emit(FILE* o, std::string_view name) -> Result<> {
+auto ParsedLayout::emit(FILE* o, std::string_view kb_name) -> Result<> {
     // Write header.
     std::println(o, "default xkb_symbols \"basic\" {{");
-    std::println(o, "    name[Group1]=\"{}\";", name);
+    std::println(o, "    name[Group1]=\"{}\";", kb_name);
     std::println(o);
     std::println(o, "    key.type[Group1] = \"EIGHT_LEVEL\";");
 
-    // Write keys.
-    keys.for_all_rows([&, row = 0](auto keys_in_row) mutable {
-        for (auto [col, key] : keys_in_row | vws::enumerate) {
-            bool first = true;
-            std::print(o, "    key <{}> {{ [", ISO105Traits::KeyName(row, col));
-            for (const auto& sym : key.symbols) {
-                if (first) first = false;
-                else std::print(o, ", ");
-                std::print(o, "{}", KeySymName(sym));
-            }
-
-            // Pad with empty symbol to level count.
-            for (usz i = key.symbols.size(); i < LAYER_COUNT; i++)
-                std::print(o, ", {}", KeySymName(U""));
-
-            std::println(o, "] }};");
+    for (auto& [name, symbols] : records)  {
+        std::print(o, "    key <{}> {{ [", name);
+        bool first = true;
+        for (const auto& sym : symbols) {
+            if (first) first = false;
+            else std::print(o, ", ");
+            std::print(o, "{}", KeySymName(sym));
         }
 
-        row++;
-    });
+        // Pad with empty symbol to level count.
+        for (usz i = symbols.size(); i < LAYER_COUNT; i++)
+            std::print(o, ", {}", KeySymName(U""));
+
+        std::println(o, "] }};");
+    }
 
     // Write modifier keys.
     std::println(o);
@@ -104,21 +96,13 @@ auto Layout::emit(FILE* o, std::string_view name) -> Result<> {
     return {};
 }
 
-auto Layout::Parse(std::string_view text) -> Result<Layout> {
-    Layout L;
-    using Stream = u32stream;
-
-    static constexpr auto Digit = [](char32_t c) -> Result<usz> {
-        if (U'0' <= c and c <= U'9') return usz(c - U'0');
-        if (U'A' <= c and c <= U'Z') return usz(c - U'A' + 10);
-        if (U'a' <= c and c <= U'z') return usz(c - U'a' + 10);
-        return Error("Invalid digit '{}'", text::ToUTF8(c));
-    };
+auto ParsedLayout::Parse(std::string_view text) -> Result<ParsedLayout> {
+    ParsedLayout layout;
 
     // Remove comments.
     auto converted = text::ToUTF32(text);
     std::u32string text_no_comments;
-    for (auto l : Stream{converted}.lines()) {
+    for (auto l : str32{converted}.lines()) {
         l = l.take_until([prev = char32_t(0)](char32_t c) mutable {
             if (c == '#' and prev != '"' and prev != '\'') return true;
             prev = c;
@@ -130,11 +114,13 @@ auto Layout::Parse(std::string_view text) -> Result<Layout> {
         text_no_comments += '\n';
     }
 
-    Stream s{text_no_comments};
-    while (not s.empty()) {
-        // Read key row and index.
-        char32_t row, key;
-        if (not s.extract(row, key)) return Error("Expected key row and index");
+    str32 s{text_no_comments};
+    while (not s.trim_front().empty()) {
+        if (not s.consume('<')) return Error("Expected '<' at start of key name");
+
+        // Read symbolic key name.
+        std::u32string name{s.take_until('>')};
+        if (not s.consume('>')) return Error("Expected '>' at end of key name");
 
         // Read '=' and '['.
         s.trim_front();
@@ -142,31 +128,28 @@ auto Layout::Parse(std::string_view text) -> Result<Layout> {
         s.trim_front();
         if (not s.consume('[')) return Error("Expected '[' before key symbols");
         s.trim_front();
+
         // Read keys.
         std::vector<std::u32string> symbol;
         do {
-            std::u32string_view sym;
+            str32 sym;
             if (not s.take_delimited_any(sym, U"'\"")) sym = s.take_until_any(U" \r\n\t\v\f]");
-            symbol.emplace_back(Stream{sym}.trim().text());
+            symbol.emplace_back(str32{sym}.trim().text());
             s.trim_front();
         } while (not s.empty() and not s.starts_with(']'));
         if (s.empty()) return Error("Expected ']' after key symbols");
         s.drop();
 
-        // Add key.
-        Key& entry = Try((L.keys[Try(Digit(row)), Try(Digit(key))]));
-        entry.symbols = std::move(symbol);
-        s.trim_front();
+        layout.records.emplace_back(std::move(name), std::move(symbol));
     }
 
-    return L;
+    return layout;
 }
 
 auto Main(int argc, char** argv) -> Result<int> {
     using namespace command_line_options;
     using options = clopts<
         positional<"file", "The file to translate to a keymap", file<std::string, std::string>>,
-        positional<"layout", "The keyboard layout format to use", values<LAYOUT_NAME_ISO105>>,
         positional<"name", "The name of the kayout">,
         option<"-o", "Output file name">,
         help<>>;
@@ -177,7 +160,7 @@ auto Main(int argc, char** argv) -> Result<int> {
     auto name = opts.get<"name">();
     auto o = output == "-"sv ? stdout : fopen(output.data(), "w");
     if (not o) return Error("Failed to open output file '{}'", output);
-    auto layout = Try(Layout::Parse(file->contents));
+    auto layout = Try(ParsedLayout::Parse(file->contents));
     Try(layout.emit(o, *name));
     return 0;
 }
