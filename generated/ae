@@ -1,0 +1,60 @@
+default xkb_symbols "basic" {
+    name[Group1]="English with IPA";
+
+    key.type[Group1] = "EIGHT_LEVEL";
+    key <TLDE> { [dead_macron, dead_breve, dead_diaeresis, notsign, U0361, U035C, dead_belowdiaeresis, dead_invertedbreve] };
+    key <AE01> { [1, exclam, exclamdown, onesubscript, onesubscript, NoSymbol, leftarrow, U2196] };
+    key <AE02> { [2, question, questiondown, twosuperior, twosubscript, U203D, uparrow, U2197] };
+    key <AE03> { [3, sterling, brokenbar, threesuperior, threesubscript, NoSymbol, rightarrow, U2198] };
+    key <AE04> { [4, dollar, section, onequarter, EuroSign, cent, downarrow, U2199] };
+    key <AE05> { [5, percent, numerosign, onehalf, U02E5, U02E6, U02E7, U02E8] };
+    key <AE06> { [6, numbersign, U204A, threequarters, UA712, UA713, UA714, UA715] };
+    key <AE07> { [7, ampersand, singlelowquotemark, doublelowquotemark, U02E9, UA716, NoSymbol, NoSymbol] };
+    key <AE08> { [8, asterisk, infinity, degree, enfilledcircbullet, NoSymbol, NoSymbol, NoSymbol] };
+    key <AE09> { [9, parenleft, leftsinglequotemark, leftdoublequotemark, ssharp, U1E9E, NoSymbol, NoSymbol] };
+    key <AE10> { [0, parenright, rightsinglequotemark, rightdoublequotemark, zerosubscript, NoSymbol, NoSymbol, U0001F440] };
+    key <AE11> { [minus, underscore, endash, emdash, NoSymbol, NoSymbol, NoSymbol, NoSymbol] };
+    key <AE12> { [equal, plus, multiply, division, plusminus, U2213, NoSymbol, NoSymbol] };
+    key <AD01> { [q, Q, at, emptyset, U0262, U02E4, U029B, U01C1] };
+    key <AD02> { [w, W, U01BF, U01F7, U028D, U02B7, U02E0, U02B6] };
+    key <AD03> { [e, E, schwa, U025B, U025C, U0258, U018E, SCHWA] };
+    key <AD04> { [r, R, U027E, U02DE, U0279, U027B, U0281, U0280] };
+    key <AD05> { [t, T, thorn, THORN, U0288, Greek_theta, U1DBF, U027A] };
+    key <AD06> { [y, Y, U028F, U0265, U0339, U031C, dagger, doubledagger] };
+    key <AD07> { [u, U, oslash, Oslash, U028A, U026F, U0289, U0276] };
+    key <AD08> { [i, I, idotless, Iabovedot, U026A, U0268, NoSymbol, NoSymbol] };
+    key <AD09> { [o, O, oe, OE, U0254, U0264, U025E, obarred] };
+    key <AD10> { [p, P, U2042, U2034, Greek_pi, U02DE, trademark, NoSymbol] };
+    key <AD11> { [bracketleft, braceleft, leftanglebracket, NoSymbol, guillemotleft, U2039, U2AFD, U27E6] };
+    key <AD12> { [bracketright, braceright, rightanglebracket, NoSymbol, guillemotright, U203A, U2AFD, U27E7] };
+    key <AC01> { [a, A, ae, AE, U0251, U0252, U0250, U028C] };
+    key <AC02> { [s, S, U0283, U0282, U0255, U017F, U026B, NoSymbol] };
+    key <AC03> { [d, D, eth, ETH, U0256, dstroke, U0257, U01C0] };
+    key <AC04> { [f, F, U0278, NoSymbol, U019E, U0220, NoSymbol, NoSymbol] };
+    key <AC05> { [g, G, U021D, U021C, U0263, U0270, U0260, U01C2] };
+    key <AC06> { [h, H, hstroke, Hstroke, U02B0, U02B1, U0266, U0267] };
+    key <AC07> { [j, J, U0237, U02B2, U032F, U0311, U203F, U2040] };
+    key <AC08> { [k, K, U029E, U0295, U0294, U02A1, U02A2, U02C0] };
+    key <AC09> { [l, L, lstroke, Lstroke, U026C, U026E, U029F, U026D] };
+    key <AC10> { [semicolon, colon, paragraph, NoSymbol, U02D0, U02D1, U0329, U030D] };
+    key <AC11> { [apostrophe, quotedbl, grave, asciitilde, U02C8, U02CC, minutes, seconds] };
+    key <BKSL> { [dead_circumflex, asciicircum, dead_tilde, dead_belowtilde, dead_caron, U2053, NoSymbol, NoSymbol] };
+    key <LSGT> { [dead_acute, dead_grave, dead_doubleacute, dead_doublegrave, U031D, U031E, U02D4, U02D5] };
+    key <AB01> { [z, Z, ezh, EZH, U0290, U0291, NoSymbol, NoSymbol] };
+    key <AB02> { [x, X, registered, copyright, Greek_chi, NoSymbol, U029C, NoSymbol] };
+    key <AB03> { [c, C, ccedilla, Ccedilla, U025F, U029D, U0284, U01C3] };
+    key <AB04> { [v, V, Greek_beta, U028B, U032A, U0346, U033A, NoSymbol] };
+    key <AB05> { [b, B, U2C71, U0299, U0253, U0298, NoSymbol, NoSymbol] };
+    key <AB06> { [n, N, eng, ENG, U0272, U0273, U0274, U207F] };
+    key <AB07> { [m, M, mu, U0271, U031F, U0320, U02D6, U02D7] };
+    key <AB08> { [comma, less, dead_ogonek, dead_cedilla, dead_belowcomma, dead_abovecomma, dead_abovereversedcomma, NoSymbol] };
+    key <AB09> { [period, greater, periodcentered, U032C, dead_belowdot, dead_abovedot, dead_belowring, dead_abovering] };
+    key <AB10> { [slash, backslash, bar, U2044, NoSymbol, NoSymbol, NoSymbol, NoSymbol] };
+
+    key.type[Group1] = "ONE_LEVEL";
+    key <RALT> { [ ISO_Level3_Shift ] };
+    key <MENU> { [ ISO_Level5_Shift ] };
+
+    include "level3(ralt_switch)"
+    include "level5(menu_switch)"
+};
