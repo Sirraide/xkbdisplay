@@ -19,7 +19,7 @@ state 0x10, keycode 10 (keysym 0x31, 1), same_screen YES
 ``` 
 This means that the keycode that corresponds to the `1` key is `10`; armed with this
 knowledge, open `/usr/share/X11/xkb/keycodes/evdev`, where you’ll see something like
-this
+this:
 ```ini
 <TLDE> = 49; 
 <AE01> = 10; 
@@ -29,8 +29,8 @@ this
 <AE05> = 14; 
 ...
 ```
-This tells us that the name corresponding of the key with keycode `10` (i.e. the `1`
-key) is `<AE01>`, which means that we can assign characters to the `1` as follows:
+This tells us that the name corresponding to the key with keycode `10` (i.e. the `1`
+key) is `<AE01>`, which means that we can assign characters to it as follows:
 ```ini
 <AE01> = [ 1 ! ¡ ₁ ]
 ```
