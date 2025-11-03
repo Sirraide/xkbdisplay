@@ -8,7 +8,7 @@ KB files are text files that consist of a series of records. Each record has the
 form:
 ```ini
 # this is a comment
-key = [ a, b, c, d, "comma", '"', ... ]
+key = [ a b c d "comma" '"' ... ]
 ```
 
 The keys are symbolic XKB names (e.g. `<TLDE>`); if you’re unsure what name a key
