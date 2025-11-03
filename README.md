@@ -1,7 +1,13 @@
 # XKB Keyboard Layout Generator
 
-This program takes a `.kb` file (described below) and translates it to an XKB
+This program (`xkbgen`) takes a `.kb` file (described below) and translates it to an XKB
 keyboard; I use it to simplify editing my keyboard layout.
+
+For examples see [ae.kb](/ae.kb), and [aegreek.kb](/aegreek.kb), my normal and
+Ancient Greek keyboard layouts, respectively.
+
+For information on how to ‘install’ a custom keyboard layout on linux, see
+[here](https://github.com/Sirraide/how-to-do-things/blob/master/custom-keyboard-layouts-on-linux.md)
 
 ## KB file format
 KB files are text files that consist of a series of records. Each record has the
@@ -34,3 +40,7 @@ key) is `<AE01>`, which means that we can assign characters to it as follows:
 ```ini
 <AE01> = [ 1 ! ¡ ₁ ]
 ```
+
+# XKB Keyboard Layout Previewer
+This repository also includes a keyboard layout previewer (`xkbdisplay`), which—unlike 
+all other previewers (that I know of)—can display keyboard layouts with up to 8 layers.
