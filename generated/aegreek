@@ -2,7 +2,7 @@ default xkb_symbols "basic" {
     name[Group1]="Greek (improved)";
 
     key.type[Group1] = "EIGHT_LEVEL";
-    key <TLDE> { [dead_macron, dead_breve, dead_diaeresis, notsign, U0361, U035C, dead_belowdiaeresis, dead_invertedbreve] };
+    key <TLDE> { [dead_acute, dead_grave, dead_psili, dead_dasia, dead_diaeresis, notsign, dead_macron, dead_breve] };
     key <AE01> { [1, exclam, exclamdown, onesubscript, onesubscript, NoSymbol, leftarrow, U2196] };
     key <AE02> { [2, U037E, questiondown, twosuperior, twosubscript, U203D, uparrow, U2197] };
     key <AE03> { [3, sterling, brokenbar, threesuperior, threesubscript, NoSymbol, rightarrow, U2198] };
@@ -27,6 +27,7 @@ default xkb_symbols "basic" {
     key <AD10> { [Greek_pi, Greek_PI, Greek_psi, Greek_PSI, Greek_pi, U02DE, trademark, NoSymbol] };
     key <AD11> { [bracketleft, braceleft, leftanglebracket, NoSymbol, guillemotleft, U2039, U2AFD, U27E6] };
     key <AD12> { [bracketright, braceright, rightanglebracket, NoSymbol, guillemotright, U203A, U2AFD, U27E7] };
+    key <BKSL> { [asciitilde, asciicircum, dead_tilde, dead_circumflex, dead_belowtilde, dead_caron, U0361, U035C] };
     key <AC01> { [Greek_alpha, Greek_ALPHA, ae, AE, U0251, U0252, U0250, U028C] };
     key <AC02> { [Greek_sigma, Greek_SIGMA, Greek_finalsmallsigma, U0282, U0255, U017F, U026C, U026E] };
     key <AC03> { [Greek_delta, Greek_DELTA, eth, ETH, U0256, dstroke, U0257, U01C0] };
@@ -38,8 +39,6 @@ default xkb_symbols "basic" {
     key <AC09> { [Greek_lamda, Greek_LAMDA, lstroke, Lstroke, U028E, U029F, U026D, U026B] };
     key <AC10> { [semicolon, colon, paragraph, NoSymbol, U02D0, U02D1, U0329, U030D] };
     key <AC11> { [apostrophe, quotedbl, grave, asciitilde, U02C8, U02CC, minutes, seconds] };
-    key <BKSL> { [dead_circumflex, asciicircum, dead_tilde, dead_belowtilde, dead_caron, U2053, NoSymbol, NoSymbol] };
-    key <LSGT> { [dead_acute, dead_grave, dead_psili, dead_dasia, U031D, U031E, U02D4, U02D5] };
     key <AB01> { [Greek_zeta, Greek_ZETA, ezh, EZH, U0290, U0291, NoSymbol, NoSymbol] };
     key <AB02> { [Greek_xi, Greek_XI, registered, copyright, Greek_chi, NoSymbol, U02B0, U02B1] };
     key <AB03> { [Greek_chi, Greek_CHI, ccedilla, Ccedilla, U025F, U029D, U0284, U01C3] };

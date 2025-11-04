@@ -2,16 +2,16 @@ default xkb_symbols "basic" {
     name[Group1]="English with IPA";
 
     key.type[Group1] = "EIGHT_LEVEL";
-    key <TLDE> { [dead_macron, dead_breve, dead_diaeresis, notsign, U0361, U035C, dead_belowdiaeresis, dead_invertedbreve] };
+    key <TLDE> { [dead_acute, dead_grave, dead_diaeresis, notsign, dead_macron, dead_breve, dead_belowdiaeresis, dead_invertedbreve] };
     key <AE01> { [1, exclam, exclamdown, onesubscript, onesubscript, NoSymbol, leftarrow, U2196] };
     key <AE02> { [2, question, questiondown, twosuperior, twosubscript, U203D, uparrow, U2197] };
     key <AE03> { [3, sterling, brokenbar, threesuperior, threesubscript, NoSymbol, rightarrow, U2198] };
     key <AE04> { [4, dollar, section, onequarter, EuroSign, cent, downarrow, U2199] };
     key <AE05> { [5, percent, numerosign, onehalf, U02E5, U02E6, U02E7, U02E8] };
     key <AE06> { [6, numbersign, U204A, threequarters, UA712, UA713, UA714, UA715] };
-    key <AE07> { [7, ampersand, singlelowquotemark, doublelowquotemark, U02E9, UA716, NoSymbol, NoSymbol] };
-    key <AE08> { [8, asterisk, infinity, degree, enfilledcircbullet, NoSymbol, NoSymbol, NoSymbol] };
-    key <AE09> { [9, parenleft, leftsinglequotemark, leftdoublequotemark, ssharp, U1E9E, NoSymbol, NoSymbol] };
+    key <AE07> { [7, ampersand, singlelowquotemark, doublelowquotemark, U02E9, UA716, U031D, U031E] };
+    key <AE08> { [8, asterisk, infinity, degree, enfilledcircbullet, NoSymbol, U02D4, U02D5] };
+    key <AE09> { [9, parenleft, leftsinglequotemark, leftdoublequotemark, ssharp, U1E9E, dead_doubleacute, dead_doublegrave] };
     key <AE10> { [0, parenright, rightsinglequotemark, rightdoublequotemark, zerosubscript, NoSymbol, NoSymbol, U0001F440] };
     key <AE11> { [minus, underscore, endash, emdash, NoSymbol, NoSymbol, NoSymbol, NoSymbol] };
     key <AE12> { [equal, plus, multiply, division, plusminus, U2213, NoSymbol, NoSymbol] };
@@ -27,6 +27,7 @@ default xkb_symbols "basic" {
     key <AD10> { [p, P, U2042, U2034, Greek_pi, U02DE, trademark, NoSymbol] };
     key <AD11> { [bracketleft, braceleft, leftanglebracket, NoSymbol, guillemotleft, U2039, U2AFD, U27E6] };
     key <AD12> { [bracketright, braceright, rightanglebracket, NoSymbol, guillemotright, U203A, U2AFD, U27E7] };
+    key <BKSL> { [asciitilde, asciicircum, dead_tilde, dead_circumflex, dead_belowtilde, dead_caron, U0361, U035C] };
     key <AC01> { [a, A, ae, AE, U0251, U0252, U0250, U028C] };
     key <AC02> { [s, S, U0283, U0282, U0255, U017F, U026B, NoSymbol] };
     key <AC03> { [d, D, eth, ETH, U0256, dstroke, U0257, U01C0] };
@@ -38,8 +39,6 @@ default xkb_symbols "basic" {
     key <AC09> { [l, L, lstroke, Lstroke, U026C, U026E, U029F, U026D] };
     key <AC10> { [semicolon, colon, paragraph, NoSymbol, U02D0, U02D1, U0329, U030D] };
     key <AC11> { [apostrophe, quotedbl, grave, asciitilde, U02C8, U02CC, minutes, seconds] };
-    key <BKSL> { [dead_circumflex, asciicircum, dead_tilde, dead_belowtilde, dead_caron, U2053, NoSymbol, NoSymbol] };
-    key <LSGT> { [dead_acute, dead_grave, dead_doubleacute, dead_doublegrave, U031D, U031E, U02D4, U02D5] };
     key <AB01> { [z, Z, ezh, EZH, U0290, U0291, NoSymbol, NoSymbol] };
     key <AB02> { [x, X, registered, copyright, Greek_chi, NoSymbol, U029C, NoSymbol] };
     key <AB03> { [c, C, ccedilla, Ccedilla, U025F, U029D, U0284, U01C3] };

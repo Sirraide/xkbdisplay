@@ -144,3 +144,9 @@ add_executable(xkbgen src/xkbgen.cc)
 target_link_libraries(xkb++ PRIVATE options)
 target_link_libraries(xkbdisplay PRIVATE options xkb++)
 target_link_libraries(xkbgen PRIVATE options xkb++)
+
+if (DEFINED XKBDISPLAY_DEFAULT_LAYOUT)
+    target_compile_definitions(xkbdisplay PRIVATE
+        "-DXKBDISPLAY_DEFAULT_LAYOUT=\"${XKBDISPLAY_DEFAULT_LAYOUT}\""
+    )
+endif()

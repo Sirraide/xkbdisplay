@@ -3,10 +3,10 @@
 # ###########################################################################
 # Key: '^'
 <TLDE> = [
-    "dead_macron"           "dead_breve"
+    dead_acute dead_grave
+    dead_psili dead_dasia
     "dead_diaeresis"        "¬"
-    " ͡ "                    " ͜ "
-    "dead_belowdiaeresis"   "dead_invertedbreve"
+    "dead_macron"           "dead_breve"
 ]
 
 #           1    2    3    4    5    6    7    8
@@ -39,6 +39,12 @@
 <AD10> = [  π    Π    ψ    Ψ    π    ˞    ™       ] # Key: 'P'
 <AD11> = [ "["   {    ⟨   " "   «    ‹    ⫽    ⟦  ] # Key: '['
 <AD12> = [ "]"   }    ⟩   " "   »    ›    ⫽    ⟧  ] # Key: ']'
+<BKSL> = [ # Key: '\'
+    ~ ^
+    dead_tilde dead_circumflex
+    dead_belowtilde dead_caron
+    " ͡ " " ͜ "
+]
 
 # ###########################################################################
 #  Third Row (ASDFG...)
@@ -55,23 +61,10 @@
 <AC09> = [  λ    Λ    ł    Ł    ʎ    ʟ    ɭ    ɫ  ] # Key: 'L'
 <AC10> = [  ;    :    ¶   " "   ː    ˑ    ̩     ̍   ] # Key: ';'
 <AC11> = [ "'"  '"'   `    ~    ˈ    ˌ    ′    ″  ] # Key: '''
-<BKSL> = [ # Key: '#'
-    dead_circumflex ^
-    dead_tilde dead_belowtilde
-    dead_caron ⁓
-]
 
 # ###########################################################################
 #  Fourth Row (ASDFG...)
 # ###########################################################################
-#           1    2    3    4    5    6    7    8
-<LSGT> = [ # Key: '´'
-    dead_acute dead_grave
-    dead_psili dead_dasia
-    ̝     ̞
-    ˔    ˕
-]
-
 <AB01> = [  ζ    Ζ    ʒ    Ʒ    ʐ    ʑ            ] # Key: 'Z'
 <AB02> = [  ξ    Ξ    ®    ©    χ   " "   ʰ    ʱ  ] # Key: 'X'
 <AB03> = [  χ    Χ    ç    Ç    ɟ    ʝ    ʄ    ǃ  ] # Key: 'C'

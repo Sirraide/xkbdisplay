@@ -20,6 +20,10 @@
 using namespace base;
 using namespace layout;
 
+#ifndef XKBDISPLAY_DEFAULT_LAYOUT
+#    define XKBDISPLAY_DEFAULT_LAYOUT LAYOUT_NAME_ISO105
+#endif
+
 // ============================================================================
 //  Context and Data
 // ============================================================================
@@ -475,7 +479,7 @@ auto Main(int argc, char** argv) -> Result<int> {
 
     auto opts = options::parse(argc, argv);
     auto font = opts.get<"-f">("Charis SIL");
-    auto layout = opts.get<"layout">(std::getenv("XKBDISPLAY_DEFAULT_LAYOUT") ?: LAYOUT_NAME_ISO105);
+    auto layout = opts.get<"layout">(std::getenv("XKBDISPLAY_DEFAULT_LAYOUT") ?: XKBDISPLAY_DEFAULT_LAYOUT);
     auto ctx = Try(DisplayContext::Create(font, layout));
     ctx->Run();
     return 0;
