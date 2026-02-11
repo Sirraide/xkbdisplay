@@ -88,6 +88,7 @@ auto ParsedLayout::emit(FILE* o, std::string_view kb_name) -> Result<> {
     std::println(o);
     std::println(o, "    key.type[Group1] = \"ONE_LEVEL\";");
     std::println(o, "    key <RALT> {{ [ ISO_Level3_Shift ] }};");
+    std::println(o, "    key <RWIN> {{ [ ISO_Level5_Shift ] }};");
     std::println(o, "    key <MENU> {{ [ ISO_Level5_Shift ] }};");
     std::println(o);
     std::println(o, "    include \"level3(ralt_switch)\"");

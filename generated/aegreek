@@ -10,9 +10,9 @@ default xkb_symbols "basic" {
     key <AE05> { [5, percent, numerosign, onehalf, U02E5, U02E6, U02E7, U02E8] };
     key <AE06> { [6, numbersign, U204A, threequarters, UA712, UA713, UA714, UA715] };
     key <AE07> { [7, ampersand, singlelowquotemark, doublelowquotemark, U02E9, UA716, NoSymbol, NoSymbol] };
-    key <AE08> { [8, asterisk, infinity, degree, enfilledcircbullet, NoSymbol, NoSymbol, NoSymbol] };
+    key <AE08> { [8, asterisk, infinity, degree, U2022, NoSymbol, NoSymbol, NoSymbol] };
     key <AE09> { [9, parenleft, leftsinglequotemark, leftdoublequotemark, ssharp, U1E9E, NoSymbol, NoSymbol] };
-    key <AE10> { [0, parenright, rightsinglequotemark, rightdoublequotemark, zerosubscript, NoSymbol, NoSymbol, U0001F440] };
+    key <AE10> { [0, parenright, rightsinglequotemark, rightdoublequotemark, zerosubscript, NoSymbol, NoSymbol, U1F440] };
     key <AE11> { [minus, underscore, endash, emdash, NoSymbol, NoSymbol, NoSymbol, NoSymbol] };
     key <AE12> { [equal, plus, multiply, division, plusminus, U2213, NoSymbol, NoSymbol] };
     key <AD01> { [U03D9, U03D8, at, U03DF, U0262, U02E4, U029B, U01C1] };
@@ -25,8 +25,8 @@ default xkb_symbols "basic" {
     key <AD08> { [Greek_iota, Greek_IOTA, U0345, Iabovedot, U026A, U0268, NoSymbol, NoSymbol] };
     key <AD09> { [Greek_omicron, Greek_OMICRON, Greek_omega, Greek_OMEGA, U0254, U0264, U025E, obarred] };
     key <AD10> { [Greek_pi, Greek_PI, Greek_psi, Greek_PSI, Greek_pi, U02DE, trademark, NoSymbol] };
-    key <AD11> { [bracketleft, braceleft, leftanglebracket, NoSymbol, guillemotleft, U2039, U2AFD, U27E6] };
-    key <AD12> { [bracketright, braceright, rightanglebracket, NoSymbol, guillemotright, U203A, U2AFD, U27E7] };
+    key <AD11> { [bracketleft, braceleft, U27E8, NoSymbol, guillemotleft, U2039, U2AFD, U27E6] };
+    key <AD12> { [bracketright, braceright, U27E9, NoSymbol, guillemotright, U203A, U2AFD, U27E7] };
     key <BKSL> { [asciitilde, asciicircum, dead_tilde, dead_circumflex, dead_belowtilde, dead_caron, U0361, U035C] };
     key <AC01> { [Greek_alpha, Greek_ALPHA, ae, AE, U0251, U0252, U0250, U028C] };
     key <AC02> { [Greek_sigma, Greek_SIGMA, Greek_finalsmallsigma, U0282, U0255, U017F, U026C, U026E] };
@@ -52,6 +52,7 @@ default xkb_symbols "basic" {
 
     key.type[Group1] = "ONE_LEVEL";
     key <RALT> { [ ISO_Level3_Shift ] };
+    key <RWIN> { [ ISO_Level5_Shift ] };
     key <MENU> { [ ISO_Level5_Shift ] };
 
     include "level3(ralt_switch)"
