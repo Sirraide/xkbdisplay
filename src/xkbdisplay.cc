@@ -478,7 +478,7 @@ auto Main(int argc, char** argv) -> Result<int> {
     >; // clang-format on
 
     auto opts = options::parse(argc, argv);
-    auto font = opts.get<"-f">("Charis SIL");
+    auto font = opts.get<"-f">("Charis");
     auto layout = opts.get<"layout">(std::getenv("XKBDISPLAY_DEFAULT_LAYOUT") ?: XKBDISPLAY_DEFAULT_LAYOUT);
     auto ctx = Try(DisplayContext::Create(font, layout));
     ctx->Run();
