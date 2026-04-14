@@ -1,5 +1,4 @@
 #include <chrono>
-#include <clopts.hh>
 #include <functional>
 #include <map>
 #include <print>
@@ -8,6 +7,7 @@
 #include <vector>
 
 #include <base/Base.hh>
+#include <base/Clopts.hh>
 #include <base/Text.hh>
 
 #include <X11/X.h>
@@ -470,7 +470,7 @@ auto DisplayContext::Font(const std::string& name, u32 font_sz) -> XftFont* {
 }
 
 auto Main(int argc, char** argv) -> Result<int> {
-    using namespace command_line_options;
+    using namespace base::cmd;
     using options = clopts< // clang-format off
         positional<"layout", "The layout to use", values<LAYOUT_NAME_ISO105, LAYOUT_NAME_ANSI104>, false>,
         option<"-f", "The font to use">,

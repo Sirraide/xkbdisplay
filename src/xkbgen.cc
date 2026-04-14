@@ -1,11 +1,11 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
-#include <clopts.hh>
 #include <print>
 #include <ranges>
 
 #include <base/Base.hh>
+#include <base/Clopts.hh>
 #include <base/Text.hh>
 
 #include <xkb++/layout.hh>
@@ -148,7 +148,7 @@ auto ParsedLayout::Parse(std::string_view text) -> Result<ParsedLayout> {
 }
 
 auto Main(int argc, char** argv) -> Result<int> {
-    using namespace command_line_options;
+    using namespace base::cmd;
     using options = clopts<
         positional<"file", "The file to translate to a keymap", file<std::string, std::string>>,
         positional<"name", "The name of the kayout">,
